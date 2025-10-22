@@ -12,6 +12,15 @@
             <div class="header-content">
                 <h1 class="header-title">❤️ Heart Disease Risk Prediction Tool</h1>
                 <p class="header-subtitle">Advanced medical assessment for cardiovascular risk evaluation</p>
+                <div class="theme-toggle">
+                    <label for="themeSwitch" class="sr-only">Toggle dark mode</label>
+                    <button id="themeSwitch" aria-pressed="false" class="theme-btn">🌙</button>
+                </div>
+                <!-- Patient tabs (multiple patients support) -->
+                <div id="patientTabsWrapper">
+                    <div id="patientTabs" class="patient-tabs"></div>
+                    <button id="addPatientBtn" class="theme-btn" title="Add patient">＋</button>
+                </div>
             </div>
         </header>
 
@@ -22,8 +31,8 @@
                     <h2 class="section-title">Personal Information</h2>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label" for="age">Age: <span id="ageValue">52</span> years</label>
-                            <input type="range" id="age" name="age" min="25" max="79" value="52" class="slider">
+                            <label class="form-label" for="age">Age: <span id="ageValue"></span> years</label>
+                            <input type="range" id="age" name="age" min="25" max="79" class="slider">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Gender</label>
@@ -48,20 +57,20 @@
                     <h2 class="section-title">Health Metrics</h2>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label" for="cholesterol">Cholesterol Level: <span id="cholesterolValue">249</span> mg/dL</label>
-                            <input type="range" id="cholesterol" name="cholesterol" min="150" max="349" value="249" class="slider">
+                            <label class="form-label" for="cholesterol">Cholesterol Level: <span id="cholesterolValue"></span> mg/dL</label>
+                            <input type="range" id="cholesterol" name="cholesterol" min="150" max="349" class="slider">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="bloodPressure">Blood Pressure: <span id="bloodPressureValue">134</span> mmHg</label>
-                            <input type="range" id="bloodPressure" name="bloodPressure" min="90" max="179" value="134" class="slider">
+                            <label class="form-label" for="bloodPressure">Blood Pressure: <span id="bloodPressureValue"></span> mmHg</label>
+                            <input type="range" id="bloodPressure" name="bloodPressure" min="90" max="179" class="slider">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="heartRate">Heart Rate: <span id="heartRateValue">79</span> bpm</label>
-                            <input type="range" id="heartRate" name="heartRate" min="60" max="99" value="79" class="slider">
+                            <label class="form-label" for="heartRate">Resting Heart Rate: <span id="heartRateValue"></span> bpm</label>
+                            <input type="range" id="heartRate" name="heartRate" min="60" max="140" value="80" class="slider">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="bloodSugar">Blood Sugar: <span id="bloodSugarValue">134</span> mg/dL</label>
-                            <input type="range" id="bloodSugar" name="bloodSugar" min="70" max="199" value="134" class="slider">
+                            <label class="form-label" for="bloodSugar">Blood Sugar: <span id="bloodSugarValue"></span> mg/dL</label>
+                            <input type="range" id="bloodSugar" name="bloodSugar" min="70" max="450" class="slider">
                         </div>
                     </div>
                 </section>
@@ -87,12 +96,12 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="exercise">Exercise Hours per Week: <span id="exerciseValue">4</span> hours</label>
-                            <input type="range" id="exercise" name="exercise" min="0" max="9" value="4" class="slider">
+                            <label class="form-label" for="exercise">Exercise Hours per Week: <span id="exerciseValue"></span> hours</label>
+                            <input type="range" id="exercise" name="exercise" min="0" max="9" class="slider">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="stress">Stress Level: <span id="stressValue">5</span>/10</label>
-                            <input type="range" id="stress" name="stress" min="1" max="10" value="5" class="slider">
+                            <label class="form-label" for="stress">Stress Level: <span id="stressValue"></span>/10</label>
+                            <input type="range" id="stress" name="stress" min="1" max="10" class="slider">
                         </div>
                     </div>
                 </section>

@@ -407,6 +407,59 @@ pre code {
   position: relative;
 }
 
+/* Theme toggle button */
+.theme-toggle {
+  display: inline-block;
+  margin-top: 8px;
+}
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.theme-btn:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Light/Dark data attribute control (prefers explicit data-color-scheme attribute on html) */
+html[data-color-scheme='dark'] {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+/* Patient tabs */
+.patient-tabs {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+.patient-tab {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+.patient-tab.active {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  box-shadow: var(--shadow-sm);
+}
+#patientTabsWrapper {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-left:16px;
+}
+
+
 .btn:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);

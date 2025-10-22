@@ -28,22 +28,53 @@ class HeartDiseasePredictor:
             'Diabetes', 'Obesity', 'Stress Level', 'Blood Sugar',
             'Exercise Induced Angina', 'Chest Pain Type'
         ]
-
-        # Always use ensemble_model.pkl unless another path is provided
-        default_model_path = 'ensemble_model.pkl'
-        if model_path is None:
-            model_path = default_model_path
         
-        # Try to load the ensemble model first
-        if os.path.exists('ensemble_model.pkl'):
-            try:
-                self.load_model('ensemble_model.pkl')
-                print("✅ Successfully loaded ensemble_model.pkl")
-            except Exception as e:
-                print(f"⚠️ Failed to load ensemble_model.pkl: {e}")
-                print("   Falling back to rule-based prediction")
-        elif model_path and os.path.exists(model_path):
-            self.load_model(model_path)
+        # Default values for form fields
+        self.default_values = {
+            "age": 45,
+            "gender": "Male",
+            "cholesterol": 200,
+            "bloodPressure": 120,
+            "heartRate": 75,
+            "smoking": "Never",
+            "alcoholIntake": "None",
+            "exerciseHours": 3,
+            "familyHistory": "No",
+            "diabetes": "No",
+            "obesity": "No",
+            "stressLevel": 3,
+            "bloodSugar": 100,
+            "exerciseInducedAngina": "No",
+            "chestPainType": "Asymptomatic"
+        }
+
+        # Always try models/ensemble_model.pkl, then root 'ensemble_model.pkl',
+        # or a user-provided model_path.
+        default_model_filenames = [
+            os.path.join('models', 'ensemble_model.pkl'),
+            'ensemble_model.pkl'
+        ]
+
+        if model_path:
+            # provided explicit path takes precedence
+            candidate_paths = [model_path] + default_model_filenames
+        else:
+            candidate_paths = default_model_filenames
+
+        loaded = False
+        for p in candidate_paths:
+            if p and os.path.exists(p):
+                try:
+                    self.load_model(p)
+                    print(f"✅ Successfully loaded model from {p}")
+                    loaded = True
+                    break
+                except Exception as e:
+                    print(f"⚠️ Failed to load model from {p}: {e}")
+                    continue
+
+        if not loaded:
+            print("No model loaded; using rule-based fallback prediction")
 
         # Initialize data preprocessing
         self.setup_preprocessors()
@@ -52,7 +83,16 @@ class HeartDiseasePredictor:
         """Setup label encoders and scalers based on the training data"""
         try:
             # Load the cleaned dataset to understand the data structure
-            df = pd.read_csv('heart_disease_cleaned.csv')
+            # Try data/ first, then root filename
+            cleaned_paths = [os.path.join('data', 'heart_disease_cleaned.csv'), 'heart_disease_cleaned.csv', 'heart_disease_cleaned.csv.csv']
+            df = None
+            for p in cleaned_paths:
+                if os.path.exists(p):
+                    df = pd.read_csv(p)
+                    break
+
+            if df is None:
+                raise FileNotFoundError('cleaned dataset not found in data/ or project root')
 
             # Initialize label encoders for categorical variables
             categorical_columns = ['Gender', 'Smoking', 'Alcohol Intake', 'Family History',
@@ -89,6 +129,15 @@ class HeartDiseasePredictor:
         except Exception as e:
             print(f"Error loading model: {e}")
 
+    def get_default_values(self):
+        """
+        Get default values for form fields
+        
+        Returns:
+            dict: Default values for all form fields
+        """
+        return self.default_values
+        
     def preprocess_input(self, input_data):
         """
         Preprocess input data for prediction

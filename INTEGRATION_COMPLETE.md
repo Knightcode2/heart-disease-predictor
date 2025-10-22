@@ -108,3 +108,24 @@ Your system is ready for:
 Your heart disease prediction system is now complete and ready to provide accurate, real-time risk assessments using your ensemble machine learning model. The system combines modern web technology with advanced ML to deliver professional-grade health risk predictions.
 
 **Ready to predict heart disease risk with confidence! 💓**
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtualenv
+.venv/
+env/
+venv/
+
+# Data & artifacts
+*.csv
+*.zip
+
+# VSCode / OS
+.vscode/
+Thumbs.db
+.DS_Store
+

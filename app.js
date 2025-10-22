@@ -1,3 +1,22 @@
+// Fallback: Ensure slider values are shown on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    const sliders = [
+        { id: 'age', displayId: 'ageValue' },
+        { id: 'cholesterol', displayId: 'cholesterolValue' },
+        { id: 'bloodPressure', displayId: 'bloodPressureValue' },
+        { id: 'heartRate', displayId: 'heartRateValue' },
+        { id: 'bloodSugar', displayId: 'bloodSugarValue' },
+        { id: 'exercise', displayId: 'exerciseValue' },
+        { id: 'stress', displayId: 'stressValue' }
+    ];
+    sliders.forEach(slider => {
+        const sliderElement = document.getElementById(slider.id);
+        const displayElement = document.getElementById(slider.displayId);
+        if (sliderElement && displayElement) {
+            displayElement.textContent = sliderElement.value;
+        }
+    });
+});
 // Heart Disease Prediction App JavaScript
 
 class HeartDiseasePredictor {
@@ -7,9 +26,111 @@ class HeartDiseasePredictor {
         this.predictBtn = document.getElementById('predictBtn');
         this.resetBtn = document.getElementById('resetBtn');
         this.loadingSpinner = document.getElementById('loadingSpinner');
+        this.defaultValues = {};
         
-        this.initializeEventListeners();
-        this.initializeSliders();
+        this.fetchDefaultValues()
+            .then(() => {
+                this.initializeEventListeners();
+                this.initializeSliders();
+            })
+            .catch(error => {
+                console.error('Error fetching default values:', error);
+                // Initialize with empty values if fetch fails
+                this.initializeEventListeners();
+                this.initializeSliders();
+            });
+    }
+    
+    async fetchDefaultValues() {
+        try {
+            // Use absolute URL to ensure correct path
+            const response = await fetch(window.location.origin + '/api/default_values');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                this.defaultValues = data.default_values;
+                console.log('Default values loaded:', this.defaultValues);
+                this.populateFormWithDefaults();
+            } else {
+                console.error('Failed to load default values:', data.message);
+            }
+        } catch (error) {
+            console.error('Error fetching default values:', error);
+            // Don't throw error, just continue with empty defaults
+            this.defaultValues = {};
+        }
+    }
+    
+    populateFormWithDefaults() {
+        // Only populate if we have default values
+        if (!this.defaultValues || Object.keys(this.defaultValues).length === 0) {
+            return;
+        }
+        
+        // Set form field values from default values
+        const defaults = this.defaultValues;
+        
+        // Set numeric input values
+        document.getElementById('age').value = defaults.age || '';
+        const cholesterolInput = document.getElementById('cholesterol');
+        const heartRateInput = document.getElementById('heartRate');
+        const bloodSugarInput = document.getElementById('bloodSugar');
+        if (cholesterolInput) cholesterolInput.max = 400;
+        if (heartRateInput) {
+            heartRateInput.max = 120;
+            // Change label to 'Resting Heart Rate'
+            const heartRateLabel = document.querySelector("label[for='heartRate']");
+            if (heartRateLabel) heartRateLabel.textContent = 'Resting Heart Rate';
+        }
+        if (bloodSugarInput) bloodSugarInput.max = 450;
+        document.getElementById('cholesterol').value = defaults.cholesterol || '';
+        document.getElementById('bloodPressure').value = defaults.bloodPressure || '';
+        document.getElementById('heartRate').value = defaults.heartRate || '';
+        document.getElementById('exercise').value = defaults.exerciseHours || '';
+        document.getElementById('bloodSugar').value = defaults.bloodSugar || '';
+        
+        // Set sliders
+        document.getElementById('stress').value = defaults.stressLevel || 1;
+        
+        // Set select dropdowns
+        this.setSelectValue('smoking', defaults.smoking);
+        this.setSelectValue('alcohol', defaults.alcoholIntake);
+        this.setSelectValue('chestPain', defaults.chestPainType);
+        
+        // Set radio buttons
+        this.setRadioValue('gender', defaults.gender);
+        this.setRadioValue('familyHistory', defaults.familyHistory);
+    // Set diabetes toggle to 'No' by default
+    this.setRadioValue('diabetes', 'No');
+        this.setRadioValue('obesity', defaults.obesity);
+        this.setRadioValue('angina', defaults.exerciseInducedAngina);
+    }
+    
+    setSelectValue(id, value) {
+        const select = document.getElementById(id);
+        if (select && value) {
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === value) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+    
+    setRadioValue(name, value) {
+        if (value) {
+            const radios = document.getElementsByName(name);
+            for (let radio of radios) {
+                if (radio.value === value) {
+                    radio.checked = true;
+                    break;
+                }
+            }
+        }
     }
 
     initializeEventListeners() {
@@ -28,7 +149,7 @@ class HeartDiseasePredictor {
             { id: 'age', displayId: 'ageValue', unit: 'years' },
             { id: 'cholesterol', displayId: 'cholesterolValue', unit: 'mg/dL' },
             { id: 'bloodPressure', displayId: 'bloodPressureValue', unit: 'mmHg' },
-            { id: 'heartRate', displayId: 'heartRateValue', unit: 'bpm' },
+            { id: 'heartRate', displayId: 'heartRateValue', unit: 'bpm', label: 'Resting Heart Rate' },
             { id: 'bloodSugar', displayId: 'bloodSugarValue', unit: 'mg/dL' },
             { id: 'exercise', displayId: 'exerciseValue', unit: 'hours' },
             { id: 'stress', displayId: 'stressValue', unit: '/10' }
@@ -37,17 +158,58 @@ class HeartDiseasePredictor {
         sliders.forEach(slider => {
             const sliderElement = document.getElementById(slider.id);
             const displayElement = document.getElementById(slider.displayId);
-            
+
             if (sliderElement && displayElement) {
-                // Set initial value
+                // Set initial value (fix: always show number on load)
                 displayElement.textContent = sliderElement.value;
-                
+
                 // Update on input
                 sliderElement.addEventListener('input', (e) => {
                     displayElement.textContent = e.target.value;
                 });
+
+                // Allow direct input from keyboard (click to edit)
+                displayElement.style.cursor = 'pointer';
+                displayElement.title = 'Click to edit';
+                displayElement.addEventListener('click', () => {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.value = sliderElement.value;
+                    input.min = sliderElement.min;
+                    input.max = sliderElement.max;
+                    input.style.width = '60px';
+                    displayElement.replaceWith(input);
+                    input.focus();
+                    input.addEventListener('blur', () => {
+                        let val = input.value;
+                        if (val < input.min) val = input.min;
+                        if (val > input.max) val = input.max;
+                        sliderElement.value = val;
+                        input.replaceWith(displayElement);
+                        displayElement.textContent = val;
+                    });
+                    input.addEventListener('keydown', (ev) => {
+                        if (ev.key === 'Enter') {
+                            input.blur();
+                        }
+                    });
+                });
             }
         });
+
+        // Auto-select diabetes if blood sugar > 125
+        const bloodSugarInput = document.getElementById('bloodSugar');
+        if (bloodSugarInput) {
+            bloodSugarInput.addEventListener('input', (e) => {
+                const diabetesYes = document.querySelector('input[name="diabetes"][value="Yes"]');
+                const diabetesNo = document.querySelector('input[name="diabetes"][value="No"]');
+                if (parseInt(e.target.value) > 125 && diabetesYes) {
+                    diabetesYes.checked = true;
+                } else if (diabetesNo) {
+                    diabetesNo.checked = true;
+                }
+            });
+        }
     }
 
     async handleFormSubmit(e) {
@@ -154,111 +316,6 @@ class HeartDiseasePredictor {
         return data;
     }
 
-    calculateRiskScore(data) {
-        let riskScore = 0;
-        let maxScore = 100;
-
-        // Age factor (25% of total risk)
-        const ageRisk = Math.min((data.age - 25) / (79 - 25) * 25, 25);
-        riskScore += ageRisk;
-
-        // Gender factor (5% of total risk)
-        if (data.gender === 'Male') {
-            riskScore += 5; // Males generally have higher risk
-        }
-
-        // Cholesterol factor (15% of total risk)
-        if (data.cholesterol > 300) {
-            riskScore += 15;
-        } else if (data.cholesterol > 240) {
-            riskScore += 10;
-        } else if (data.cholesterol > 200) {
-            riskScore += 5;
-        }
-
-        // Blood Pressure factor (15% of total risk)
-        if (data.bloodPressure > 160) {
-            riskScore += 15;
-        } else if (data.bloodPressure > 140) {
-            riskScore += 10;
-        } else if (data.bloodPressure > 130) {
-            riskScore += 5;
-        }
-
-        // Blood Sugar factor (10% of total risk)
-        if (data.bloodSugar > 180) {
-            riskScore += 10;
-        } else if (data.bloodSugar > 140) {
-            riskScore += 7;
-        } else if (data.bloodSugar > 100) {
-            riskScore += 3;
-        }
-
-        // Heart Rate factor (5% of total risk)
-        if (data.heartRate > 90 || data.heartRate < 65) {
-            riskScore += 5;
-        }
-
-        // Smoking factor (15% of total risk)
-        switch (data.smoking) {
-            case 'Current':
-                riskScore += 15;
-                break;
-            case 'Former':
-                riskScore += 7;
-                break;
-            case 'Never':
-                riskScore += 0;
-                break;
-        }
-
-        // Alcohol factor (3% of total risk)
-        switch (data.alcohol) {
-            case 'Heavy':
-                riskScore += 3;
-                break;
-            case 'Moderate':
-                riskScore += 1;
-                break;
-            case 'None':
-                riskScore += 0;
-                break;
-        }
-
-        // Exercise factor (protective, -10% potential)
-        const exerciseProtection = Math.min(data.exercise * 1.2, 10);
-        riskScore -= exerciseProtection;
-
-        // Stress factor (7% of total risk)
-        riskScore += (data.stress - 1) * 0.8;
-
-        // Medical history factors
-        if (data.familyHistory === 'Yes') riskScore += 8;
-        if (data.diabetes === 'Yes') riskScore += 12;
-        if (data.obesity === 'Yes') riskScore += 8;
-        if (data.angina === 'Yes') riskScore += 10;
-
-        // Chest pain factor
-        switch (data.chestPain) {
-            case 'Typical Angina':
-                riskScore += 12;
-                break;
-            case 'Atypical Angina':
-                riskScore += 8;
-                break;
-            case 'Non-anginal Pain':
-                riskScore += 4;
-                break;
-            case 'Asymptomatic':
-                riskScore += 0;
-                break;
-        }
-
-        // Ensure score is within bounds
-        riskScore = Math.max(0, Math.min(100, riskScore));
-        
-        return Math.round(riskScore);
-    }
 
     displayResultsFromBackend(result) {
         const riskPercentageEl = document.getElementById('riskPercentage');
@@ -367,35 +424,59 @@ class HeartDiseasePredictor {
         // Reset form
         this.form.reset();
         
-        // Reset slider displays to default values
-        document.getElementById('ageValue').textContent = '52';
-        document.getElementById('cholesterolValue').textContent = '249';
-        document.getElementById('bloodPressureValue').textContent = '134';
-        document.getElementById('heartRateValue').textContent = '79';
-        document.getElementById('bloodSugarValue').textContent = '134';
-        document.getElementById('exerciseValue').textContent = '4';
-        document.getElementById('stressValue').textContent = '5';
-        
-        // Reset sliders to default values
-        document.getElementById('age').value = '52';
-        document.getElementById('cholesterol').value = '249';
-        document.getElementById('bloodPressure').value = '134';
-        document.getElementById('heartRate').value = '79';
-        document.getElementById('bloodSugar').value = '134';
-        document.getElementById('exercise').value = '4';
-        document.getElementById('stress').value = '5';
-        
-        // Set default radio button selections
-        document.querySelector('input[name="gender"][value="Male"]').checked = true;
-        document.querySelector('input[name="familyHistory"][value="No"]').checked = true;
-        document.querySelector('input[name="diabetes"][value="No"]').checked = true;
-        document.querySelector('input[name="obesity"][value="No"]').checked = true;
-        document.querySelector('input[name="angina"][value="No"]').checked = true;
-        
-        // Reset dropdowns
-        document.getElementById('smoking').value = 'Never';
-        document.getElementById('alcohol').value = 'None';
-        document.getElementById('chestPain').value = 'Asymptomatic';
+        // Use default values from backend if available
+        if (this.defaultValues && Object.keys(this.defaultValues).length > 0) {
+            // Populate form with default values from backend
+            this.populateFormWithDefaults();
+            
+            // Update slider displays to match default values
+            const defaults = this.defaultValues;
+            document.getElementById('ageValue').textContent = defaults.age || '';
+            document.getElementById('cholesterolValue').textContent = defaults.cholesterol || '';
+            document.getElementById('bloodPressureValue').textContent = defaults.bloodPressure || '';
+            document.getElementById('heartRateValue').textContent = defaults.heartRate || '';
+            document.getElementById('bloodSugarValue').textContent = defaults.bloodSugar || '';
+            document.getElementById('exerciseValue').textContent = defaults.exerciseHours || '';
+            document.getElementById('stressValue').textContent = defaults.stressLevel || '';
+        } else {
+            // Reset slider displays to default values
+            document.getElementById('ageValue').textContent = '52';
+            document.getElementById('cholesterolValue').textContent = '249';
+            document.getElementById('bloodPressureValue').textContent = '134';
+            document.getElementById('heartRateValue').textContent = '79';
+            document.getElementById('bloodSugarValue').textContent = '134';
+            document.getElementById('exerciseValue').textContent = '4';
+            document.getElementById('stressValue').textContent = '5';
+
+            // Reset sliders to default values and max values
+            document.getElementById('age').value = '52';
+            const cholesterolInput = document.getElementById('cholesterol');
+            if (cholesterolInput) cholesterolInput.max = 400;
+            cholesterolInput.value = '249';
+            document.getElementById('bloodPressure').value = '134';
+            const heartRateInput = document.getElementById('heartRate');
+            if (heartRateInput) heartRateInput.max = 120;
+            heartRateInput.value = '79';
+            const heartRateLabel = document.querySelector("label[for='heartRate']");
+            if (heartRateLabel) heartRateLabel.textContent = 'Resting Heart Rate';
+            const bloodSugarInput = document.getElementById('bloodSugar');
+            if (bloodSugarInput) bloodSugarInput.max = 450;
+            bloodSugarInput.value = '134';
+            document.getElementById('exercise').value = '4';
+            document.getElementById('stress').value = '5';
+
+            // Set default radio button selections
+            document.querySelector('input[name="gender"][value="Male"]').checked = true;
+            document.querySelector('input[name="familyHistory"][value="No"]').checked = true;
+            document.querySelector('input[name="diabetes"][value="No"]').checked = true;
+            document.querySelector('input[name="obesity"][value="No"]').checked = true;
+            document.querySelector('input[name="angina"][value="No"]').checked = true;
+
+            // Reset dropdowns
+            document.getElementById('smoking').value = 'Never';
+            document.getElementById('alcohol').value = 'None';
+            document.getElementById('chestPain').value = 'Asymptomatic';
+        }
         
         // Hide results
         this.resultsSection.classList.add('hidden');
@@ -433,3 +514,123 @@ function addTooltips() {
 
 // Initialize tooltips after DOM load
 document.addEventListener('DOMContentLoaded', addTooltips);
+
+// Theme toggle handling
+function initThemeToggle() {
+    const switchBtn = document.getElementById('themeSwitch');
+    if (!switchBtn) return;
+
+    const setTheme = (theme) => {
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-color-scheme', 'dark');
+            switchBtn.textContent = '☀️';
+            switchBtn.setAttribute('aria-pressed', 'true');
+        } else {
+            document.documentElement.setAttribute('data-color-scheme', 'light');
+            switchBtn.textContent = '🌙';
+            switchBtn.setAttribute('aria-pressed', 'false');
+        }
+        localStorage.setItem('theme', theme);
+    };
+
+    // Initialize from saved preference or system
+    const saved = localStorage.getItem('theme');
+    if (saved) setTheme(saved);
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+    else setTheme('light');
+
+    switchBtn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-color-scheme');
+        setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initThemeToggle);
+
+// Patient management: allow multiple patient tabs with separate form state
+class PatientManager {
+    constructor(formId) {
+        this.form = document.getElementById(formId);
+        this.tabsContainer = document.getElementById('patientTabs');
+        this.addBtn = document.getElementById('addPatientBtn');
+        this.patients = []; // {id, name, data}
+        this.activeId = null;
+
+        if (this.addBtn) this.addBtn.addEventListener('click', () => this.addPatient());
+
+        // create initial patient
+        this.addPatient('Patient 1');
+    }
+
+    addPatient(defaultName) {
+        const id = 'p' + Date.now();
+        const name = defaultName || `Patient ${this.patients.length + 1}`;
+        const patient = { id, name, data: {} };
+        this.patients.push(patient);
+        this.renderTabs();
+        this.activatePatient(id);
+    }
+
+    renderTabs() {
+        if (!this.tabsContainer) return;
+        this.tabsContainer.innerHTML = '';
+        this.patients.forEach(p => {
+            const el = document.createElement('div');
+            el.className = 'patient-tab' + (p.id === this.activeId ? ' active' : '');
+            el.textContent = p.name;
+            el.dataset.id = p.id;
+            el.addEventListener('click', () => this.activatePatient(p.id));
+            this.tabsContainer.appendChild(el);
+        });
+    }
+
+    activatePatient(id) {
+        // save current form
+        if (this.activeId) this.saveFormToPatient(this.activeId);
+
+        this.activeId = id;
+        // load form for active
+        this.loadPatientToForm(id);
+        this.renderTabs();
+    }
+
+    saveFormToPatient(id) {
+        const patient = this.patients.find(p => p.id === id);
+        if (!patient) return;
+        const formData = new FormData(this.form);
+        const data = {};
+        for (let [key, val] of formData.entries()) data[key] = val;
+        patient.data = data;
+    }
+
+    loadPatientToForm(id) {
+        const patient = this.patients.find(p => p.id === id);
+        if (!patient) return;
+        // Reset form
+        this.form.reset();
+        // populate
+        const data = patient.data || {};
+        for (const [k, v] of Object.entries(data)) {
+            const el = this.form.elements[k];
+            if (!el) continue;
+            if (el.type === 'radio') {
+                const radios = this.form.querySelectorAll(`input[name="${k}"]`);
+                radios.forEach(r => r.checked = (r.value === v));
+            } else {
+                el.value = v;
+            }
+        }
+        // update displayed slider numbers
+        const sliders = ['age','cholesterol','bloodPressure','heartRate','bloodSugar','exercise','stress'];
+        sliders.forEach(id => {
+            const s = document.getElementById(id);
+            const disp = document.getElementById(id + 'Value');
+            if (s && disp) disp.textContent = s.value;
+        });
+    }
+}
+
+// initialize patient manager after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.patientManager = new PatientManager('predictionForm');
+});
