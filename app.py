@@ -137,6 +137,21 @@ def model_info():
         "preprocessors_ready": len(predictor.label_encoders) > 0
     })
 
+@app.route('/api/default_values', methods=['GET'])
+def default_values():
+    """Get default values for form fields"""
+    try:
+        defaults = predictor.get_default_values()
+        return jsonify({
+            "status": "success",
+            "default_values": defaults
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 if __name__ == '__main__':
     print("🚀 Starting Heart Disease Prediction Server...")
     print("📊 Web Application: http://localhost:5000")
