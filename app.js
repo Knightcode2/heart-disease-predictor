@@ -166,14 +166,14 @@ class HeartDiseasePredictor {
 
     initializeEventListeners() {
         // Form submission
-        this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
+        this.form.addEventListener('submit', (e) => {
+            e.preventDefault();  // Prevent form from submitting normally
+            this.handleSubmit(e);
+        });
+        this.resetBtn.addEventListener('click', this.resetForm.bind(this));
         
-        // Reset button
-        this.resetBtn.addEventListener('click', () => this.resetForm());
-        
-        // Slider value updates
-        this.initializeSliders();
-    }
+        // Theme toggle
+        this.initThemeTab();
 
     initializeSliders() {
         const sliders = [
@@ -522,81 +522,9 @@ class HeartDiseasePredictor {
     }
 }
 
-// Patient Management
-class PatientManager {
-    constructor() {
-        this.patients = [];
-        this.currentPatient = 0;
-        this.patientTabs = document.getElementById('patientTabs');
-        this.addPatientBtn = document.getElementById('addPatientBtn');
-        
-        this.initialize();
-    }
-    
-    initialize() {
-        this.addPatientBtn.onclick = () => this.addNewPatient();
-        this.addNewPatient(); // Add first patient
-        this.renderTabs();
-    }
-    
-    addNewPatient() {
-        this.patients.push({
-            data: new FormData(document.getElementById('predictionForm')),
-            result: null
-        });
-        this.currentPatient = this.patients.length - 1;
-        this.renderTabs();
-    }
-    
-    removePatient(index) {
-        if (this.patients.length <= 1) return; // Keep at least one patient
-        
-        this.patients.splice(index, 1);
-        if (this.currentPatient >= this.patients.length) {
-            this.currentPatient = this.patients.length - 1;
-        }
-        this.renderTabs();
-    }
-    
-    switchPatient(index) {
-        if (index === this.currentPatient) return;
-        
-        // Save current form data
-        this.patients[this.currentPatient].data = new FormData(document.getElementById('predictionForm'));
-        this.currentPatient = index;
-        
-        // Load selected patient data
-        const formData = this.patients[index].data;
-        const form = document.getElementById('predictionForm');
-        // TODO: Implement form data restoration
-        
-        this.renderTabs();
-    }
-    
-    renderTabs() {
-        this.patientTabs.innerHTML = '';
-        this.patients.forEach((patient, index) => {
-            const tab = document.createElement('button');
-            tab.type = 'button';
-            tab.className = index === this.currentPatient ? 'patient-tab active' : 'patient-tab';
-            tab.innerHTML = `Patient ${index + 1} <span class="remove-patient">×</span>`;
-            tab.onclick = (e) => {
-                if (e.target.className === 'remove-patient') {
-                    e.stopPropagation();
-                    this.removePatient(index);
-                } else {
-                    this.switchPatient(index);
-                }
-            };
-            this.patientTabs.appendChild(tab);
-        });
-    }
-}
-
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    const predictor = new HeartDiseasePredictor();
-    const patientManager = new PatientManager();
+    new HeartDiseasePredictor();
 });
 
 // Additional utility functions for enhanced interactivity
