@@ -221,6 +221,6 @@ Future enhancements could include:
 
 ---
 
-**Created by**: AI Assistant
+**Created by**: Vivek Kumar
 **Version**: 1.0
-**Last Updated**: December 2024
+**Last Updated**: November 2025
