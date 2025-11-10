@@ -156,6 +156,9 @@ print(f"Risk: {result['risk_percentage']}%")
 
 ## 🔧 Customization Options
 
+## 📦 Portable distribution
+If you want to make a portable Windows build you can copy to a USB drive, see the `portable/` folder for instructions and scripts to build a PyInstaller one-folder distribution.
+
 ### Adding New Features
 1. Update the `feature_columns` list in `heart_disease_backend.py`
 2. Add corresponding form fields in the web interface

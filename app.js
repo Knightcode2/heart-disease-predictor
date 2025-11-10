@@ -63,6 +63,37 @@ class HeartDiseasePredictor {
             this.defaultValues = {};
         }
     }
+
+    // Theme tab initialization moved here so it can be called during setup
+    initThemeTab() {
+        const themeTab = document.getElementById('themeTab');
+        if (!themeTab) return;
+
+        const applyTheme = (mode) => {
+            if (mode === 'dark') {
+                document.documentElement.setAttribute('data-color-scheme', 'dark');
+                themeTab.textContent = '🌞';
+                themeTab.setAttribute('aria-pressed', 'true');
+            } else {
+                document.documentElement.setAttribute('data-color-scheme', 'light');
+                themeTab.textContent = '🌙';
+                themeTab.setAttribute('aria-pressed', 'false');
+            }
+            localStorage.setItem('color-scheme', mode);
+        };
+
+        // Initialize from localStorage or prefer-dark
+        const saved = localStorage.getItem('color-scheme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initial = saved || (prefersDark ? 'dark' : 'light');
+        applyTheme(initial);
+
+        themeTab.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-color-scheme') || 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+        });
+    }
     
     populateFormWithDefaults() {
         // Only populate if we have default values
@@ -265,22 +296,27 @@ class HeartDiseasePredictor {
         let result = null;
         try {
             // Send POST request to backend
-            const response = await fetch('http://localhost:5000/api/predict', {
+            // use same-origin relative path so deployment (Render, etc.) calls the correct backend
+            const response = await fetch(window.location.origin + '/api/predict', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) throw new Error('Prediction request failed');
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`Prediction request failed (${response.status}): ${text}`);
+            }
             result = await response.json();
         } catch (error) {
             // Fallback: show error message
+            const msg = error && error.message ? error.message : 'Prediction service error';
             result = {
                 risk_percentage: '--',
                 risk_category: 'Error',
                 color: '#ef4444',
-                recommendations: ['Could not connect to prediction service. Please try again later.'],
+                recommendations: [msg],
                 disclaimer: ''
             };
         }
@@ -633,4 +669,36 @@ class PatientManager {
 // initialize patient manager after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.patientManager = new PatientManager('predictionForm');
+    // initialize theme tab (standalone)
+    if (typeof initThemeTabStandalone === 'function') initThemeTabStandalone();
 });
+
+// Standalone theme tab initializer (keeps parity with initThemeTab in the class)
+function initThemeTabStandalone() {
+    const themeTab = document.getElementById('themeTab');
+    if (!themeTab) return;
+
+    const applyTheme = (mode) => {
+        if (mode === 'dark') {
+            document.documentElement.setAttribute('data-color-scheme', 'dark');
+            themeTab.textContent = '🌞';
+            themeTab.setAttribute('aria-pressed', 'true');
+        } else {
+            document.documentElement.setAttribute('data-color-scheme', 'light');
+            themeTab.textContent = '🌙';
+            themeTab.setAttribute('aria-pressed', 'false');
+        }
+        localStorage.setItem('color-scheme', mode);
+    };
+
+    const saved = localStorage.getItem('color-scheme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initial = saved || (prefersDark ? 'dark' : 'light');
+    applyTheme(initial);
+
+    themeTab.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-color-scheme') || 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+    });
+}

@@ -407,6 +407,85 @@ pre code {
   position: relative;
 }
 
+/* Tabs area (patient tabs + theme tab) */
+.tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tabs-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tabs-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.patient-tabs {
+  display: flex;
+  gap: 6px;
+}
+.tab-btn {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-card-border);
+  padding: 6px 10px;
+  border-radius: var(--radius-base);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+.tab-btn:hover {
+  transform: translateY(-1px);
+}
+.tab-btn[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  border-color: rgba(var(--color-success-rgb), 0.25);
+}
+
+/* Patient tab pill */
+.patient-tab {
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  cursor: pointer;
+}
+.patient-tab.active {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+}
+
+/* Responsive behavior for tabs */
+@media (max-width: 720px) {
+  .tabs-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .tabs-left {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+  .patient-tabs {
+    display: inline-flex;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .tabs-right {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .tab-btn {
+    padding: 8px 12px;
+    min-width: 44px;
+  }
+}
+
 /* Theme toggle button */
 .theme-toggle {
   display: inline-block;
@@ -1238,23 +1317,15 @@ select.form-control:focus {
   display: none !important;
 }
 
-/* Override any default focus styles that may be causing blue circles */
-*:focus {
-  outline: none;
-}
-
-*:focus-visible {
-  outline: 2px solid var(--color-primary);
+/* Keep accessible focus styles: prefer :focus-visible (keyboard navigation). */
+:focus-visible {
+  outline: var(--focus-outline);
   outline-offset: 2px;
 }
 
-/* Remove any webkit focus ring */
-*:focus::-webkit-focus-ring-color {
-  outline-color: transparent;
-}
-
-/* Ensure no blue highlighting on tap/click */
-* {
+/* Reduce tap highlight and prevent accidental selection on non-text interactive elements.
+   Allow text selection inside form fields so numeric values can be edited. */
+:where(button, a, .tab-btn, .patient-tab, .btn, .theme-btn, .radio-label, .slider) {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -1264,6 +1335,7 @@ select.form-control:focus {
   user-select: none;
 }
 
+/* Allow text selection inside inputs */
 input, textarea, select {
   -webkit-user-select: text;
   -khtml-user-select: text;

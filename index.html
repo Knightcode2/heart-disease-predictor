@@ -12,14 +12,15 @@
             <div class="header-content">
                 <h1 class="header-title">❤️ Heart Disease Risk Prediction Tool</h1>
                 <p class="header-subtitle">Advanced medical assessment for cardiovascular risk evaluation</p>
-                <div class="theme-toggle">
-                    <label for="themeSwitch" class="sr-only">Toggle dark mode</label>
-                    <button id="themeSwitch" aria-pressed="false" class="theme-btn">🌙</button>
-                </div>
-                <!-- Patient tabs (multiple patients support) -->
-                <div id="patientTabsWrapper">
-                    <div id="patientTabs" class="patient-tabs"></div>
-                    <button id="addPatientBtn" class="theme-btn" title="Add patient">＋</button>
+                <!-- Patient tabs and theme tab -->
+                <div id="patientTabsWrapper" class="tabs-row">
+                    <div class="tabs-left">
+                        <div id="patientTabs" class="patient-tabs"></div>
+                        <button id="addPatientBtn" class="tab-btn" title="Add patient">＋</button>
+                    </div>
+                    <div class="tabs-right">
+                        <button id="themeTab" class="tab-btn" title="Toggle theme" aria-pressed="false">🌙</button>
+                    </div>
                 </div>
             </div>
         </header>

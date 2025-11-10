@@ -66,11 +66,11 @@ class HeartDiseasePredictor:
             if p and os.path.exists(p):
                 try:
                     self.load_model(p)
-                    print(f"✅ Successfully loaded model from {p}")
+                    print(f"Successfully loaded model from {p}")
                     loaded = True
                     break
                 except Exception as e:
-                    print(f"⚠️ Failed to load model from {p}: {e}")
+                    print(f"Failed to load model from {p}: {e}")
                     continue
 
         if not loaded:
