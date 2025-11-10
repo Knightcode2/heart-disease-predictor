@@ -455,11 +455,22 @@ pre code {
   cursor: pointer;
 }
 .patient-tab.active {
-  background: var(--color-primary);
-  color: var(--color-btn-primary-text);
+    background: var(--color-primary);
+    color: white;
 }
 
-/* Responsive behavior for tabs */
+.remove-patient {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.remove-patient:hover {
+    opacity: 1;
+}/* Responsive behavior for tabs */
 @media (max-width: 720px) {
   .tabs-row {
     flex-direction: column;
