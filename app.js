@@ -166,14 +166,14 @@ class HeartDiseasePredictor {
 
     initializeEventListeners() {
         // Form submission
-        this.form.addEventListener('submit', (e) => {
-            e.preventDefault();  // Prevent form from submitting normally
-            this.handleSubmit(e);
-        });
-        this.resetBtn.addEventListener('click', this.resetForm.bind(this));
+        this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
         
-        // Theme toggle
-        this.initThemeTab();
+        // Reset button
+        this.resetBtn.addEventListener('click', () => this.resetForm());
+        
+        // Slider value updates
+        this.initializeSliders();
+    }
 
     initializeSliders() {
         const sliders = [
