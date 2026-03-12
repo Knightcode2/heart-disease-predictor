@@ -114,7 +114,6 @@ class HeartDiseasePredictor {
             heartRateInput.max = 120;
             // Change label to 'Resting Heart Rate'
             const heartRateLabel = document.querySelector("label[for='heartRate']");
-            if (heartRateLabel) heartRateLabel.textContent = 'Resting Heart Rate';
         }
         if (bloodSugarInput) bloodSugarInput.max = 450;
         document.getElementById('cholesterol').value = defaults.cholesterol || '';
@@ -494,7 +493,6 @@ class HeartDiseasePredictor {
             if (heartRateInput) heartRateInput.max = 120;
             heartRateInput.value = '79';
             const heartRateLabel = document.querySelector("label[for='heartRate']");
-            if (heartRateLabel) heartRateLabel.textContent = 'Resting Heart Rate';
             const bloodSugarInput = document.getElementById('bloodSugar');
             if (bloodSugarInput) bloodSugarInput.max = 450;
             bloodSugarInput.value = '134';
@@ -613,8 +611,52 @@ class PatientManager {
         this.patients.forEach(p => {
             const el = document.createElement('div');
             el.className = 'patient-tab' + (p.id === this.activeId ? ' active' : '');
-            el.textContent = p.name;
             el.dataset.id = p.id;
+
+            // add name label (editable on double-click)
+            const label = document.createElement('span');
+            label.textContent = p.name;
+            label.style.cursor = "pointer";
+            label.title = "Click to edit name";
+
+            // allow editing patient name (single click)
+            label.addEventListener("click", (e) => {
+                e.stopPropagation();
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = p.name;
+                input.style.width = "90px";
+
+                label.replaceWith(input);
+                input.focus();
+
+                input.addEventListener("blur", () => {
+                    p.name = input.value || p.name;
+                    this.renderTabs();
+                });
+
+                input.addEventListener("keydown", (ev) => {
+                    if (ev.key === "Enter") input.blur();
+                });
+            });
+
+            el.appendChild(label);
+
+            // include remove button if more than one patient exists
+            if (this.patients.length > 1) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-patient';
+                removeBtn.type = 'button';
+                removeBtn.title = 'Remove this patient';
+                removeBtn.textContent = '✂';
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.removePatient(p.id);
+                });
+                el.appendChild(removeBtn);
+            }
+
             el.addEventListener('click', () => this.activatePatient(p.id));
             this.tabsContainer.appendChild(el);
         });
@@ -663,6 +705,36 @@ class PatientManager {
             const disp = document.getElementById(id + 'Value');
             if (s && disp) disp.textContent = s.value;
         });
+    }
+
+    /**
+     * Remove a patient tab and its associated data. Adjusts names and
+     * activates an adjacent patient or creates a fresh entry if none remain.
+     */
+    removePatient(id) {
+        const index = this.patients.findIndex(p => p.id === id);
+        if (index === -1) return;
+
+        // drop the patient record
+        this.patients.splice(index, 1);
+
+        // renumber the remaining patients
+        this.patients.forEach((p, i) => {
+            p.name = `Patient ${i + 1}`;
+        });
+
+        // if the deleted patient was active, pick a neighbor
+        if (this.activeId === id) {
+            if (this.patients.length > 0) {
+                const newIdx = index > 0 ? index - 1 : 0;
+                this.activatePatient(this.patients[newIdx].id);
+            } else {
+                // ensure there is always at least one patient
+                this.addPatient();
+            }
+        } else {
+            this.renderTabs();
+        }
     }
 }
 

@@ -426,39 +426,7 @@ pre code {
 }
 .patient-tabs {
   display: flex;
-  gap: var(--space-4);
-  overflow-x: auto;
-  padding-bottom: var(--space-4);
-  min-height: 40px;
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-}
-
-.patient-tab {
-  padding: 8px 16px;
-  border: none;
-  background: var(--color-bg-1);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  white-space: nowrap;
-}
-
-.patient-tab.active {
-  background: var(--color-primary);
-  color: white;
-}
-
-.tab-btn {
-  padding: 8px 16px;
-  border: none;
-  background: var(--color-bg-1);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: var(--font-size-base);
+  gap: 6px;
 }
 .tab-btn {
   background: var(--color-surface);
@@ -480,6 +448,9 @@ pre code {
 
 /* Patient tab pill */
 .patient-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;            /* space between name and X button */
   padding: 6px 10px;
   border-radius: var(--radius-full);
   background: var(--color-surface);
@@ -487,22 +458,23 @@ pre code {
   cursor: pointer;
 }
 .patient-tab.active {
-    background: var(--color-primary);
-    color: white;
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+}
+/* remove (cut) button inside patient tab */
+.patient-tab .remove-patient {
+  position: static;   /* remove absolute positioning */
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+.patient-tab .remove-patient:hover {
+  color: var(--color-error);
 }
 
-.remove-patient {
-    display: inline-block;
-    margin-left: 8px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    opacity: 0.7;
-}
-
-.remove-patient:hover {
-    opacity: 1;
-}/* Responsive behavior for tabs */
+/* Responsive behavior for tabs */
 @media (max-width: 720px) {
   .tabs-row {
     flex-direction: column;
@@ -669,10 +641,6 @@ select.form-control {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: var(--select-caret-light);
-  background-repeat: no-repeat;
-  background-position: right var(--space-12) center;
-  background-size: 16px;
   padding-right: var(--space-32);
 }
 
@@ -1150,6 +1118,15 @@ select.form-control {
   font-size: var(--font-size-base);
   transition: all var(--duration-fast) var(--ease-standard);
   outline: none;
+
+  /* custom caret and hide native arrow */
+  background-image: var(--select-caret-light);
+  background-repeat: no-repeat;
+  background-position: right var(--space-12) center;
+  background-size: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 select.form-control:focus {
@@ -1358,31 +1335,6 @@ select.form-control:focus {
 /* Utility Classes */
 .hidden {
   display: none !important;
-}
-
-/* Custom Select Styling */
-.form-control {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  font-size: var(--font-size-base);
-  height: var(--input-height);
-  line-height: var(--line-height-normal);
-  padding: 0 var(--space-12);
-  width: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5H7z' fill='currentColor'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 16px;
-  padding-right: 32px;
-}
-
-.form-control::-ms-expand {
-  display: none;
 }
 
 /* Keep accessible focus styles: prefer :focus-visible (keyboard navigation). */

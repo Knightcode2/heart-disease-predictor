@@ -215,12 +215,12 @@ If you encounter issues:
 Future enhancements could include:
 - Model comparison tools
 - Batch prediction capability
-- Advanced visualization charts
-- Integration with electronic health records
-- Multi-language support
+- Advanced visualization charts 
+- Integration with electronic health records 
+- Multi-language support 
 
 ---
 
-**Created by**: Vivek Kumar
+**Created by**: Rishi Verma
 **Version**: 1.0
-**Last Updated**: November 2025
+**Last Updated**: December 2025
