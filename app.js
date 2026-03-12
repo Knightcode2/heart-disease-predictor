@@ -19,6 +19,85 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 // Heart Disease Prediction App JavaScript
 
+/* =========================================
+REMOVE LOADER AFTER PAGE LOAD
+Purpose:
+Hide the loading animation once the website finishes loading
+========================================= */
+
+window.addEventListener("load", function () {
+
+  const loader = document.getElementById("pageLoader");
+
+  setTimeout(() => {
+    loader.style.opacity = "0";
+    loader.style.transition = "opacity 0.5s";
+
+    setTimeout(() => {
+      loader.style.display = "none";
+    }, 500);
+
+  }, 500); // delay for smoother experience
+});
+
+
+/* ==================================
+RISK PERCENTAGE COUNTER ANIMATION
+Place this in: app.js
+================================== */
+
+/*
+Purpose:
+Animates the risk percentage counting from 0 to the predicted value.
+Example:
+0% → 1% → 2% → ... → 65%
+
+This makes the result feel dynamic and professional.
+*/
+
+function animateRisk(targetValue) {
+
+  const element = document.getElementById("riskPercentage"); 
+  let current = 0;
+
+  const interval = setInterval(() => {
+
+    current++;
+
+    element.textContent = current + "%";
+
+    if (current >= targetValue) {
+      clearInterval(interval); // stop animation
+    }
+
+  }, 20); // animation speed
+}
+
+/*
+Purpose:
+Ensures recommendations appear as list items so CSS animation works.
+*/
+function displayRecommendations(recommendations) {
+
+  const container = document.getElementById("recommendations");
+
+  container.innerHTML = "<ul></ul>";
+
+  const list = container.querySelector("ul");
+
+  recommendations.forEach(text => {
+
+    const li = document.createElement("li");
+    li.textContent = text;
+
+    list.appendChild(li);
+
+  });
+
+}
+
+// Heart Disease Prediction App JavaScript
+
 class HeartDiseasePredictor {
     constructor() {
         this.form = document.getElementById('predictionForm');
@@ -357,8 +436,8 @@ class HeartDiseasePredictor {
         const riskCategoryEl = document.getElementById('riskCategory');
         const recommendationsEl = document.getElementById('recommendations');
 
-        // Display risk percentage
-        riskPercentageEl.textContent = `${result.risk_percentage}%`;
+        // Display risk percentage with animation
+        animateRisk(result.risk_percentage);
 
         // Display risk category
         riskCategoryEl.textContent = result.risk_category;
@@ -372,9 +451,7 @@ class HeartDiseasePredictor {
 
         // Show recommendations
         if (Array.isArray(result.recommendations)) {
-            const title = `<h3>Personalized Recommendations</h3>`;
-            const list = `<ul>${result.recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>`;
-            recommendationsEl.innerHTML = title + list;
+            displayRecommendations(result.recommendations);
         } else {
             recommendationsEl.innerHTML = `<p>${result.recommendations}</p>`;
         }
