@@ -457,6 +457,15 @@ pre code {
   border: 1px solid var(--color-card-border);
   cursor: pointer;
 }
+
+.patient-tab {
+  transition: all 0.25s ease;
+}
+
+.patient-tab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
 .patient-tab.active {
   background: var(--color-primary);
   color: var(--color-btn-primary-text);
@@ -1421,3 +1430,273 @@ input, textarea, select {
     font-size: 2.5rem;
   }
 }
+
+/* ================================
+   WEBSITE ANIMATIONS FOR UI
+   Place this in: style.css (at the bottom of the file)
+   ================================ */
+
+/* --------------------------------
+1️⃣ PATIENT TAB HOVER ANIMATION
+Purpose:
+Makes the patient tab slightly lift when hovering.
+This improves UI feedback and makes the interface feel interactive.
+-------------------------------- */
+
+.patient-tab {
+  transition: all 0.25s ease; /* smooth animation transition */
+}
+
+.patient-tab:hover {
+  transform: translateY(-2px); /* moves tab slightly upward */
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15); /* soft shadow for depth */
+}
+
+
+/* --------------------------------
+2️⃣ BUTTON PRESS ANIMATION
+Purpose:
+Makes buttons feel more interactive when hovered or clicked.
+Used for Predict Risk and Reset buttons.
+-------------------------------- */
+
+.btn--primary {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn--primary:hover {
+  transform: scale(1.05); /* button grows slightly */
+}
+
+.btn--primary:active {
+  transform: scale(0.95); /* button shrinks when clicked */
+}
+
+
+/* --------------------------------
+3️⃣ FORM FADE-IN ANIMATION
+Purpose:
+When the page loads, form sections smoothly appear instead of popping instantly.
+Makes the interface look modern.
+-------------------------------- */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px); /* start slightly below */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply animation to form sections */
+.form-section {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+
+/* --------------------------------
+4️⃣ RESULT CARD POP ANIMATION
+Purpose:
+When prediction results appear, they pop smoothly into view.
+Helps highlight the result.
+-------------------------------- */
+
+.results-card {
+  animation: popIn 0.4s ease;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* =========================================
+PAGE LOADING SCREEN ANIMATION
+Purpose:
+Shows a loading overlay when the website first opens.
+Gives a professional app-like feel.
+========================================= */
+
+/* full screen loader */
+#pageLoader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-background);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* animated spinner */
+.loader-spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(0,0,0,0.1);
+  border-top: 6px solid var(--color-primary);
+  border-radius: 50%;
+  animation: spinLoader 1s linear infinite;
+}
+
+/* spinner animation */
+@keyframes spinLoader {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================
+RESULT POP-UP ANIMATION
+Purpose:
+When prediction result appears it smoothly scales and fades in.
+========================================= */
+
+@keyframes resultAppear {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.results-card {
+  animation: resultAppear 0.5s ease forwards;
+}
+
+
+/* =========================================
+DROPDOWN OPEN/CLOSE ANIMATION
+Purpose:
+Makes dropdown menus open smoothly instead of instantly.
+========================================= */
+
+select.form-control {
+  transition: all 0.25s ease;
+}
+
+select.form-control:focus {
+  transform: scale(1.02); /* slightly enlarge when opened */
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+
+/* =========================================
+FORM FADE-IN WHEN PAGE LOADS
+Purpose:
+Form sections appear smoothly when page loads.
+========================================= */
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-section {
+  animation: pageFadeIn 0.6s ease;
+}
+/* =====================================================
+HEADER TITLE ENTRY ANIMATION
+Purpose:
+Animates the title "Heart Disease Risk Prediction Tool"
+when the page loads so it slides in smoothly.
+===================================================== */
+
+@keyframes headerSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* apply animation to the title */
+.header-title {
+  animation: headerSlideIn 1s ease forwards;
+}
+
+/* subtitle appears slightly later */
+.header-subtitle {
+  opacity: 0;
+  animation: headerSlideIn 1s ease forwards;
+  animation-delay: 0.3s;
+}
+
+
+
+/* =====================================================
+DROPDOWN OPENING SLOW ANIMATION
+Purpose:
+Makes dropdown menus open smoothly and not instantly.
+===================================================== */
+
+select.form-control {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* animation when dropdown is focused (opened) */
+select.form-control:focus {
+  transform: scale(1.02);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+
+
+/* =====================================================
+RECOMMENDATION LIST ANIMATION
+Purpose:
+Advice/recommendations after prediction will appear
+one by one smoothly instead of appearing instantly.
+===================================================== */
+
+@keyframes adviceFade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* apply animation to each recommendation */
+.recommendations li {
+  opacity: 0;
+  animation: adviceFade 0.6s ease forwards;
+}
+
+/* small delay between each recommendation */
+.recommendations li:nth-child(1) { animation-delay: 0.1s; }
+.recommendations li:nth-child(2) { animation-delay: 0.2s; }
+.recommendations li:nth-child(3) { animation-delay: 0.3s; }
+.recommendations li:nth-child(4) { animation-delay: 0.4s; }
+.recommendations li:nth-child(5) { animation-delay: 0.5s; }
+.recommendations li:nth-child(6) { animation-delay: 0.6s; }
