@@ -1,58 +1,16 @@
-﻿"""
-Flask Web Server for Heart Disease Prediction
-Serves the web application and provides API endpoints
+"""
+Flask Web Server — Cardiovascular Disease Risk Prediction
+Each route defined exactly once (original had tripled imports/routes).
 """
 
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
 from heart_disease_backend import HeartDiseasePredictor
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
-# Initialize predictor
-"""
-Flask Web Server for Heart Disease Prediction
-Serves the web application and provides API endpoints
-"""
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import os
-from heart_disease_backend import HeartDiseasePredictor
-
-app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app)
-
-# Initialize predictor
-predictor = HeartDiseasePredictor()
-
-
-@app.route('/')
-def index():
-    return app.send_static_file('index.html')
-
-
-@app.route('/<path:filename>')
-def serve_static(filename):
-    return app.send_static_file(filename)
-
-
-"""
-Flask Web Server for Heart Disease Prediction
-Serves the web application and provides API endpoints
-"""
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import os
-from heart_disease_backend import HeartDiseasePredictor
-
-app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app)
-
-# Initialize predictor
 predictor = HeartDiseasePredictor()
 
 
@@ -67,45 +25,41 @@ def serve_static(filename):
 
 
 @app.route('/api/predict', methods=['POST'])
-def predict_heart_disease():
+def predict():
     data = request.get_json()
     if not data:
-        return jsonify({"error": "No data provided"}), 400
+        return jsonify({"error": "No JSON data provided"}), 400
 
-    # Map frontend to backend keys
-    input_data = {
-        "Age": data.get('age'),
-        "Gender": data.get('gender'),
-        "Cholesterol": data.get('cholesterol'),
-        "Blood Pressure": data.get('bloodPressure'),
-        "Heart Rate": data.get('heartRate'),
-        "Smoking": data.get('smoking'),
-        "Alcohol Intake": data.get('alcoholIntake'),
-        "Exercise Hours": data.get('exerciseHours'),
-        "Family History": data.get('familyHistory'),
-        "Diabetes": data.get('diabetes'),
-        "Obesity": data.get('obesity'),
-        "Stress Level": data.get('stressLevel'),
-        "Blood Sugar": data.get('bloodSugar'),
-        "Exercise Induced Angina": data.get('exerciseInducedAngina'),
-        "Chest Pain Type": data.get('chestPainType')
+    # Map frontend keys → backend keys
+    # Frontend sends human-friendly values; backend converts internally.
+    raw = {
+        "age":        data.get('age'),          # years (int)
+        "gender":     data.get('gender'),        # "Male" / "Female"
+        "height":     data.get('height'),        # cm
+        "weight":     data.get('weight'),        # kg
+        "ap_hi":      data.get('ap_hi'),         # systolic mmHg
+        "ap_lo":      data.get('ap_lo'),         # diastolic mmHg
+        "cholesterol": data.get('cholesterol'),  # 1/2/3
+        "gluc":       data.get('gluc'),          # 1/2/3
+        "smoke":      data.get('smoke'),         # 0/1
+        "alco":       data.get('alco'),          # 0/1
+        "active":     data.get('active'),        # 0/1
     }
 
-    # basic required check
-    required = ["Age", "Gender", "Cholesterol", "Blood Pressure", "Heart Rate"]
-    for r in required:
-        if input_data.get(r) is None:
-            return jsonify({"error": f"Missing required field: {r}"}), 400
+    required = ["age", "height", "weight", "ap_hi", "ap_lo"]
+    for f in required:
+        if raw.get(f) is None:
+            return jsonify({"error": f"Missing required field: {f}"}), 400
 
     try:
-        res = predictor.predict_risk(input_data)
-        return jsonify(res)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        result = predictor.predict_risk(raw)
+        return jsonify(result)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route('/api/health')
-def health_check():
+def health():
     return jsonify({"status": "healthy", "model_loaded": predictor.model is not None})
 
 
@@ -113,32 +67,28 @@ def health_check():
 def default_values():
     try:
         return jsonify({"status": "success", "default_values": predictor.get_default_values()})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 500
 
 
 @app.route('/api/load_model', methods=['POST'])
 def load_model():
+    if 'model_file' not in request.files:
+        return jsonify({"error": "No model file provided"}), 400
+    f = request.files['model_file']
+    if not f.filename.endswith('.pkl'):
+        return jsonify({"error": "Please upload a .pkl file"}), 400
     try:
-        if 'model_file' not in request.files:
-            return jsonify({"error": "No model file provided"}), 400
-
-        file = request.files['model_file']
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
-
-        if file and file.filename.endswith('.pkl'):
-            filename = 'uploaded_model.pkl'
-            file.save(filename)
-            predictor.load_model(filename)
-            return jsonify({"message": "Model loaded successfully"})
-        else:
-            return jsonify({"error": "Please upload a .pkl file"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        path = 'uploaded_model.pkl'
+        f.save(path)
+        predictor.load_model(path)
+        return jsonify({"message": "Model loaded successfully"})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f"Starting server on port {port}")
+    print(f"Starting Cardiovascular Risk server on port {port}")
+    print(f"Model loaded: {predictor.model is not None}")
     app.run(host='0.0.0.0', port=port, debug=False)

@@ -1,415 +1,316 @@
-
 """
-Heart Disease Prediction Backend
-Integrates with trained machine learning model (PKL file)
+Heart Disease Prediction Backend — Cardio Train Model
+======================================================
+Adapted for the cardio_train.csv-trained VotingClassifier Pipeline.
+
+Model input features (11, in this order after preprocessing):
+  Continuous (RobustScaler):
+    age_years, height, weight, ap_hi, ap_lo, bmi, pulse_pressure
+  Categorical (OneHotEncoder drop='first'):
+    gender, cholesterol, gluc, smoke, alco, active
+
+Frontend sends human-friendly values; this backend converts them:
+  age        → age_years (years, integer)
+  gender     → 1=Female, 2=Male
+  height     → cm (exact)
+  weight     → kg (exact)
+  ap_hi      → systolic BP (exact)
+  ap_lo      → diastolic BP (exact)
+  cholesterol→ 1/2/3 category
+  gluc       → 1/2/3 category
+  smoke      → 0=No, 1=Yes
+  alco       → 0=No, 1=Yes
+  active     → 0=No, 1=Yes
+
+REMOVED fields (not used by this model):
+  Heart Rate, Stress Level, Family History, Diabetes (Yes/No),
+  Obesity, Exercise Induced Angina, Chest Pain Type, Blood Sugar slider
 """
 
-import pickle
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-import json
 import os
+import math
+import warnings
+
+import numpy as np
+import pandas as pd
+
+try:
+    import joblib
+    _JOBLIB_OK = True
+except ImportError:
+    _JOBLIB_OK = False
+
+try:
+    import pickle
+except ImportError:
+    pickle = None
+
 
 class HeartDiseasePredictor:
-    def __init__(self, model_path=None):
-        """
-        Initialize the Heart Disease Predictor
+    """
+    Wraps the cardio_train-trained sklearn Pipeline (preprocessor + VotingClassifier).
+    """
 
-        Args:
-            model_path (str): Path to the trained model PKL file
-        """
+    def __init__(self, model_path=None):
         self.model = None
-        self.label_encoders = {}
-        self.scaler = None
-        self.feature_columns = [
-            'Age', 'Gender', 'Cholesterol', 'Blood Pressure', 'Heart Rate',
-            'Smoking', 'Alcohol Intake', 'Exercise Hours', 'Family History',
-            'Diabetes', 'Obesity', 'Stress Level', 'Blood Sugar',
-            'Exercise Induced Angina', 'Chest Pain Type'
-        ]
-        
-        # Default values for form fields
+
+        # Default values for the updated frontend form
         self.default_values = {
-            "age": 45,
-            "gender": "Male",
-            "cholesterol": 200,
-            "bloodPressure": 120,
-            "heartRate": 75,
-            "smoking": "Never",
-            "alcoholIntake": "None",
-            "exerciseHours": 3,
-            "familyHistory": "No",
-            "diabetes": "No",
-            "obesity": "No",
-            "stressLevel": 3,
-            "bloodSugar": 100,
-            "exerciseInducedAngina": "No",
-            "chestPainType": "Asymptomatic"
+            "age":          45,       # years
+            "gender":       "Female", # Female / Male
+            "height":       165,      # cm
+            "weight":       70.0,     # kg
+            "ap_hi":        120,      # systolic mmHg
+            "ap_lo":        80,       # diastolic mmHg
+            "cholesterol":  1,        # 1=Normal, 2=Above, 3=High
+            "gluc":         1,        # 1=Normal, 2=Above, 3=High
+            "smoke":        0,        # 0=No, 1=Yes
+            "alco":         0,        # 0=No, 1=Yes
+            "active":       1,        # 0=No, 1=Yes
         }
 
-        # Always try models/ensemble_model.pkl, then root 'ensemble_model.pkl',
-        # or a user-provided model_path.
-        default_model_filenames = [
+        candidates = []
+        if model_path:
+            candidates.append(model_path)
+        candidates += [
+            os.path.join('models', 'cardio_model.pkl'),
+            'cardio_model.pkl',
             os.path.join('models', 'ensemble_model.pkl'),
-            'ensemble_model.pkl'
+            'ensemble_model.pkl',
         ]
 
-        if model_path:
-            # provided explicit path takes precedence
-            candidate_paths = [model_path] + default_model_filenames
-        else:
-            candidate_paths = default_model_filenames
-
-        loaded = False
-        for p in candidate_paths:
-            if p and os.path.exists(p):
+        for path in candidates:
+            if path and os.path.exists(path):
                 try:
-                    self.load_model(p)
-                    print(f"Successfully loaded model from {p}")
-                    loaded = True
+                    self._load(path)
+                    print(f"[Backend] Model loaded: {path}")
                     break
-                except Exception as e:
-                    print(f"Failed to load model from {p}: {e}")
-                    continue
+                except Exception as exc:
+                    print(f"[Backend] Failed {path}: {exc}")
 
-        if not loaded:
-            print("No model loaded; using rule-based fallback prediction")
+        if self.model is None:
+            print("[Backend] No model found — rule-based fallback active.")
 
-        # Initialize data preprocessing
-        self.setup_preprocessors()
-
-    def setup_preprocessors(self):
-        """Setup label encoders and scalers based on the training data"""
-        try:
-            # Load the cleaned dataset to understand the data structure
-            # Try data/ first, then root filename
-            cleaned_paths = [os.path.join('data', 'heart_disease_cleaned.csv'), 'heart_disease_cleaned.csv', 'heart_disease_cleaned.csv.csv']
-            df = None
-            for p in cleaned_paths:
-                if os.path.exists(p):
-                    df = pd.read_csv(p)
-                    break
-
-            if df is None:
-                raise FileNotFoundError('cleaned dataset not found in data/ or project root')
-
-            # Initialize label encoders for categorical variables
-            categorical_columns = ['Gender', 'Smoking', 'Alcohol Intake', 'Family History',
-                                 'Diabetes', 'Obesity', 'Exercise Induced Angina', 'Chest Pain Type']
-
-            for col in categorical_columns:
-                if col in df.columns:
-                    le = LabelEncoder()
-                    le.fit(df[col])
-                    self.label_encoders[col] = le
-
-            # Initialize scaler for numerical features
-            numerical_columns = ['Age', 'Cholesterol', 'Blood Pressure', 'Heart Rate',
-                               'Exercise Hours', 'Stress Level', 'Blood Sugar']
-
-            if len(numerical_columns) > 0:
-                self.scaler = StandardScaler()
-                self.scaler.fit(df[numerical_columns])
-
-        except FileNotFoundError:
-            print("Warning: heart_disease_cleaned.csv not found. Using default preprocessing.")
-
-    def load_model(self, model_path):
-        """
-        Load the trained model from PKL file
-
-        Args:
-            model_path (str): Path to the PKL model file
-        """
-        try:
-            with open(model_path, 'rb') as file:
-                self.model = pickle.load(file)
-            print(f"Model loaded successfully from {model_path}")
-        except Exception as e:
-            print(f"Error loading model: {e}")
+    # ── Public API ────────────────────────────────────────────────────
 
     def get_default_values(self):
-        """
-        Get default values for form fields
-        
-        Returns:
-            dict: Default values for all form fields
-        """
         return self.default_values
-        
-    def preprocess_input(self, input_data):
+
+    def load_model(self, path):
+        self._load(path)
+
+    def predict_risk(self, raw):
         """
-        Preprocess input data for prediction
-
-        Args:
-            input_data (dict): Dictionary containing user inputs
-
-        Returns:
-            np.array: Preprocessed data ready for model prediction
-        """
-        # Create DataFrame from input
-        df = pd.DataFrame([input_data])
-
-        # Ensure all required columns are present
-        for col in self.feature_columns:
-            if col not in df.columns:
-                # Set default values if missing
-                if col in ['Family History', 'Diabetes', 'Obesity', 'Exercise Induced Angina']:
-                    df[col] = 'No'
-                elif col == 'Gender':
-                    df[col] = 'Male'
-                elif col == 'Smoking':
-                    df[col] = 'Never'
-                elif col == 'Alcohol Intake':
-                    df[col] = 'None'
-                elif col == 'Chest Pain Type':
-                    df[col] = 'Asymptomatic'
-                else:
-                    df[col] = 0
-
-        # Apply label encoding to categorical variables
-        for col, encoder in self.label_encoders.items():
-            if col in df.columns:
-                try:
-                    df[col] = encoder.transform(df[col])
-                except ValueError:
-                    # Handle unknown categories
-                    df[col] = 0
-
-        # Apply scaling to numerical features
-        numerical_columns = ['Age', 'Cholesterol', 'Blood Pressure', 'Heart Rate',
-                           'Exercise Hours', 'Stress Level', 'Blood Sugar']
-
-        if self.scaler:
-            df[numerical_columns] = self.scaler.transform(df[numerical_columns])
-
-        # Return as numpy array in the correct order
-        # Convert to numpy array and ensure no feature names to avoid sklearn warnings
-        result = df[self.feature_columns].values
-        return result
-
-    def predict_risk(self, input_data):
-        """
-        Predict heart disease risk
-
-        Args:
-            input_data (dict): User input data
-
-        Returns:
-            dict: Prediction results with probability and risk category
+        raw (dict): values from the frontend using the keys defined in
+                    get_default_values().
+        Returns dict: risk_percentage, risk_category, color,
+                      recommendations, disclaimer, model_used.
         """
         if self.model is None:
-            # Fallback prediction if no model is loaded
-            return self.fallback_prediction(input_data)
+            r = self._fallback(raw)
+            r['model_used'] = 'rule_based_fallback'
+            return r
 
         try:
-            # Preprocess input
-            processed_data = self.preprocess_input(input_data)
+            df       = self._build_df(raw)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                proba = float(self.model.predict_proba(df)[0][1])
+            risk_pct = round(proba * 100, 1)
+            r = self._format(risk_pct, raw)
+            r['model_used'] = 'cardio_ml'
+            return r
 
-            # Make prediction
-            if hasattr(self.model, 'predict_proba'):
-                # Get probability of positive class (heart disease)
-                proba = self.model.predict_proba(processed_data)[0][1]
-                risk_percentage = round(proba * 100, 1)
+        except Exception as exc:
+            print(f"[Backend] Prediction error: {exc}")
+            r = self._fallback(raw)
+            r['model_used'] = 'rule_based_fallback'
+            return r
+
+    # ── Private helpers ───────────────────────────────────────────────
+
+    def _load(self, path):
+        """Try joblib first, then pickle."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            if _JOBLIB_OK:
+                self.model = joblib.load(path)
+            elif pickle:
+                with open(path, 'rb') as f:
+                    self.model = pickle.load(f)
             else:
-                # Binary prediction only
-                prediction = self.model.predict(processed_data)[0]
-                risk_percentage = 85.0 if prediction == 1 else 15.0
+                raise ImportError("joblib or pickle required")
 
-            return self.format_prediction_result(risk_percentage, input_data)
-
-        except Exception as e:
-            print(f"Error in prediction: {e}")
-            return self.fallback_prediction(input_data)
-
-    def fallback_prediction(self, input_data):
+    def _build_df(self, raw):
         """
-        Fallback prediction method when model is not available
-        Uses rule-based approach based on medical knowledge
+        Convert frontend dict → single-row DataFrame matching training schema.
+
+        Training columns (before pipeline preprocessor):
+          age, gender, height, weight, ap_hi, ap_lo,
+          cholesterol, gluc, smoke, alco, active
+        Plus engineered:
+          age_years, bmi, pulse_pressure
+        Then drop 'age'.
         """
-        risk_score = 0
+        age_years      = float(raw.get('age', 45))
+        gender_val     = 2 if str(raw.get('gender', 'Male')).strip() == 'Male' else 1
+        height         = float(raw.get('height', 165))
+        weight         = float(raw.get('weight', 70))
+        ap_hi          = float(raw.get('ap_hi', 120))
+        ap_lo          = float(raw.get('ap_lo', 80))
+        cholesterol    = int(raw.get('cholesterol', 1))
+        gluc           = int(raw.get('gluc', 1))
+        smoke          = int(raw.get('smoke', 0))
+        alco           = int(raw.get('alco', 0))
+        active         = int(raw.get('active', 1))
 
-        # Age factor (older = higher risk)
-        age = int(input_data.get('Age', 50))
-        if age >= 65:
-            risk_score += 25
-        elif age >= 55:
-            risk_score += 15
-        elif age >= 45:
-            risk_score += 10
+        bmi            = weight / ((height / 100) ** 2)
+        pulse_pressure = ap_hi - ap_lo
 
-        # Gender factor (males generally higher risk)
-        if input_data.get('Gender') == 'Male':
-            risk_score += 10
+        # The training script drops 'age' and uses 'age_years'
+        row = {
+            'age_years':     age_years,
+            'height':        height,
+            'weight':        weight,
+            'ap_hi':         ap_hi,
+            'ap_lo':         ap_lo,
+            'bmi':           bmi,
+            'pulse_pressure': pulse_pressure,
+            'gender':        gender_val,
+            'cholesterol':   cholesterol,
+            'gluc':          gluc,
+            'smoke':         smoke,
+            'alco':          alco,
+            'active':        active,
+        }
+        return pd.DataFrame([row])
 
-        # Cholesterol factor
-        cholesterol = int(input_data.get('Cholesterol', 200))
-        if cholesterol >= 240:
-            risk_score += 20
-        elif cholesterol >= 200:
-            risk_score += 10
+    def _fallback(self, raw):
+        """Rule-based scorer when ML model is unavailable."""
+        score = 0
 
-        # Blood pressure factor
-        bp = int(input_data.get('Blood Pressure', 120))
-        if bp >= 140:
-            risk_score += 20
-        elif bp >= 130:
-            risk_score += 10
+        age = float(raw.get('age', 45))
+        if age >= 60:   score += 25
+        elif age >= 50: score += 15
+        elif age >= 40: score += 8
 
-        # Smoking factor
-        smoking = input_data.get('Smoking', 'Never')
-        if smoking == 'Current':
-            risk_score += 25
-        elif smoking == 'Former':
-            risk_score += 10
+        if str(raw.get('gender', 'Male')) == 'Male':
+            score += 8
 
-        # Diabetes factor
-        if input_data.get('Diabetes') == 'Yes':
-            risk_score += 20
+        ap_hi = float(raw.get('ap_hi', 120))
+        ap_lo = float(raw.get('ap_lo', 80))
+        if ap_hi >= 160:  score += 25
+        elif ap_hi >= 140: score += 15
+        elif ap_hi >= 130: score += 8
+        if ap_lo >= 100:  score += 10
+        elif ap_lo >= 90: score += 5
 
-        # Family history factor
-        if input_data.get('Family History') == 'Yes':
-            risk_score += 15
+        chol = int(raw.get('cholesterol', 1))
+        if chol == 3:    score += 20
+        elif chol == 2:  score += 10
 
-        # Obesity factor
-        if input_data.get('Obesity') == 'Yes':
-            risk_score += 15
+        gluc = int(raw.get('gluc', 1))
+        if gluc == 3:    score += 15
+        elif gluc == 2:  score += 7
 
-        # Exercise factor (protective)
-        exercise_hours = int(input_data.get('Exercise Hours', 3))
-        if exercise_hours >= 5:
-            risk_score -= 10
-        elif exercise_hours >= 3:
-            risk_score -= 5
+        if int(raw.get('smoke', 0)) == 1:  score += 15
+        if int(raw.get('alco', 0))  == 1:  score += 8
+        if int(raw.get('active', 1)) == 0: score += 10
 
-        # Stress factor
-        stress = int(input_data.get('Stress Level', 5))
-        if stress >= 8:
-            risk_score += 10
-        elif stress >= 6:
-            risk_score += 5
+        h = float(raw.get('height', 165))
+        w = float(raw.get('weight', 70))
+        bmi = w / ((h / 100) ** 2)
+        if bmi >= 30:   score += 15
+        elif bmi >= 25: score += 7
 
-        # Ensure risk score is within 0-100 range
-        risk_percentage = max(5, min(95, risk_score))
+        risk_pct = max(5.0, min(95.0, float(score)))
+        return self._format(risk_pct, raw)
 
-        return self.format_prediction_result(risk_percentage, input_data)
-
-    def format_prediction_result(self, risk_percentage, input_data):
-        """Format the prediction result with recommendations"""
-
-        # Determine risk category
-        if risk_percentage <= 30:
-            risk_category = "Low Risk"
-            color = "#22c55e"  # Green
-        elif risk_percentage <= 60:
-            risk_category = "Moderate Risk"
-            color = "#f59e0b"  # Yellow
+    def _format(self, risk_pct, raw):
+        if risk_pct <= 30:
+            cat, color = "Low Risk",      "#22c55e"
+        elif risk_pct <= 55:
+            cat, color = "Moderate Risk", "#f59e0b"
         else:
-            risk_category = "High Risk"
-            color = "#ef4444"  # Red
-
-        # Generate recommendations
-        recommendations = self.generate_recommendations(input_data, risk_percentage)
+            cat, color = "High Risk",     "#ef4444"
 
         return {
-            "risk_percentage": risk_percentage,
-            "risk_category": risk_category,
-            "color": color,
-            "recommendations": recommendations,
-            "disclaimer": "This is a risk assessment tool and should not replace professional medical advice. Please consult with a healthcare provider for proper diagnosis and treatment."
+            "risk_percentage": risk_pct,
+            "risk_category":   cat,
+            "color":           color,
+            "recommendations": self._recs(raw, risk_pct),
+            "disclaimer": (
+                "This tool is for educational purposes only and does not "
+                "replace professional medical advice. Consult a qualified "
+                "healthcare provider for proper diagnosis and treatment."
+            ),
         }
 
-    def generate_recommendations(self, input_data, risk_percentage):
-        """Generate personalized recommendations based on input data"""
-        recommendations = []
+    def _recs(self, raw, risk_pct):
+        recs = []
 
-        # Smoking recommendations
-        smoking = input_data.get('Smoking', 'Never')
-        if smoking == 'Current':
-            recommendations.append("🚭 Quit smoking immediately - this is the single most important step for heart health")
-        elif smoking == 'Former':
-            recommendations.append("✅ Continue avoiding tobacco - great job on quitting!")
+        ap_hi = float(raw.get('ap_hi', 120))
+        ap_lo = float(raw.get('ap_lo', 80))
+        if ap_hi >= 140 or ap_lo >= 90:
+            recs.append("🩺 Your blood pressure is elevated. Reduce sodium intake, exercise regularly, and consult your doctor.")
+        elif ap_hi >= 130:
+            recs.append("🩺 Blood pressure is borderline high. Monitor it regularly and reduce salt.")
 
-        # Exercise recommendations
-        exercise_hours = int(input_data.get('Exercise Hours', 3))
-        if exercise_hours < 3:
-            recommendations.append("🏃 Increase physical activity - aim for at least 150 minutes of moderate exercise per week")
-        elif exercise_hours >= 5:
-            recommendations.append("✅ Excellent exercise routine - keep up the great work!")
+        chol = int(raw.get('cholesterol', 1))
+        if chol == 3:
+            recs.append("🥗 High cholesterol detected. Follow a heart-healthy diet: less saturated fat, more fibre and vegetables.")
+        elif chol == 2:
+            recs.append("🥗 Cholesterol is above normal. Consider dietary improvements and get a full lipid panel.")
 
-        # Diet recommendations based on cholesterol
-        cholesterol = int(input_data.get('Cholesterol', 200))
-        if cholesterol >= 200:
-            recommendations.append("🥗 Focus on heart-healthy diet - reduce saturated fats and increase fruits and vegetables")
+        gluc = int(raw.get('gluc', 1))
+        if gluc == 3:
+            recs.append("🩸 Blood glucose is well above normal — consult your doctor about diabetes management.")
+        elif gluc == 2:
+            recs.append("🩸 Blood glucose is above normal. Monitor diet and consider a glucose tolerance test.")
 
-        # Blood pressure recommendations
-        bp = int(input_data.get('Blood Pressure', 120))
-        if bp >= 130:
-            recommendations.append("🩺 Monitor blood pressure regularly and consider dietary changes to reduce sodium")
+        if int(raw.get('smoke', 0)) == 1:
+            recs.append("🚭 Smoking significantly increases cardiovascular risk. Quitting is the single most impactful step.")
 
-        # Stress management
-        stress = int(input_data.get('Stress Level', 5))
-        if stress >= 6:
-            recommendations.append("🧘 Practice stress management techniques like meditation, yoga, or deep breathing")
+        if int(raw.get('alco', 0)) == 1:
+            recs.append("🍷 Alcohol consumption raises blood pressure. Limiting intake helps heart health.")
 
-        # Weight management
-        if input_data.get('Obesity') == 'Yes':
-            recommendations.append("⚖️ Work on achieving a healthy weight through balanced diet and regular exercise")
+        if int(raw.get('active', 1)) == 0:
+            recs.append("🏃 You are sedentary. Aim for at least 150 minutes of moderate exercise per week.")
+        else:
+            recs.append("✅ Staying physically active is great for your heart — keep it up!")
 
-        # Alcohol recommendations
-        alcohol = input_data.get('Alcohol Intake', 'None')
-        if alcohol == 'Heavy':
-            recommendations.append("🍷 Consider reducing alcohol consumption to moderate levels")
+        h = float(raw.get('height', 165))
+        w = float(raw.get('weight', 70))
+        bmi = w / ((h / 100) ** 2)
+        if bmi >= 30:
+            recs.append(f"⚖️ Your BMI is {bmi:.1f} (obese range). Weight loss through diet and exercise reduces cardiac risk significantly.")
+        elif bmi >= 25:
+            recs.append(f"⚖️ Your BMI is {bmi:.1f} (overweight). Modest weight loss can lower blood pressure and cholesterol.")
 
-        # General recommendations based on risk level
-        if risk_percentage > 60:
-            recommendations.append("⚠️ Schedule an appointment with your doctor for a comprehensive cardiac evaluation")
-            recommendations.append("💊 Consider discussing preventive medications with your healthcare provider")
-        elif risk_percentage > 30:
-            recommendations.append("📅 Schedule regular check-ups with your healthcare provider")
+        if risk_pct > 55:
+            recs.append("⚠️ Your overall risk is high. Please schedule a comprehensive cardiovascular evaluation with your doctor.")
+            recs.append("💊 Discuss preventive medications (statins, antihypertensives) with your healthcare provider.")
+        elif risk_pct > 30:
+            recs.append("📅 Schedule regular check-ups including blood pressure and lipid panel screenings.")
 
-        recommendations.append("🔬 Consider regular health screenings including lipid panels and blood pressure checks")
+        recs.append("🔬 Annual health screenings (BP, cholesterol, glucose) are recommended for everyone over 40.")
+        return recs
 
-        return recommendations
 
-# Example usage and testing
-def test_predictor():
-    """Test function to demonstrate the predictor"""
-
-    # Sample input data
-    sample_input = {
-        "Age": 55,
-        "Gender": "Male",
-        "Cholesterol": 220,
-        "Blood Pressure": 140,
-        "Heart Rate": 75,
-        "Smoking": "Former",
-        "Alcohol Intake": "Moderate",
-        "Exercise Hours": 3,
-        "Family History": "Yes",
-        "Diabetes": "No",
-        "Obesity": "No",
-        "Stress Level": 6,
-        "Blood Sugar": 110,
-        "Exercise Induced Angina": "No",
-        "Chest Pain Type": "Atypical Angina"
-    }
-
-    # Initialize predictor
-    predictor = HeartDiseasePredictor()
-
-    # Make prediction
-    result = predictor.predict_risk(sample_input)
-
-    print("Sample Prediction Result:")
-    print(f"Risk Percentage: {result['risk_percentage']}%")
-    print(f"Risk Category: {result['risk_category']}")
-    print("Recommendations:")
-    for rec in result['recommendations']:
-        print(f"  - {rec}")
-
-    return result
+# ── Self-test ──────────────────────────────────────────────────────────
+def _test():
+    p = HeartDiseasePredictor()
+    cases = [
+        ("Young healthy female", {"age": 30, "gender": "Female", "height": 165, "weight": 58,
+          "ap_hi": 110, "ap_lo": 70, "cholesterol": 1, "gluc": 1, "smoke": 0, "alco": 0, "active": 1}),
+        ("Middle-aged smoker male", {"age": 52, "gender": "Male", "height": 175, "weight": 90,
+          "ap_hi": 150, "ap_lo": 95, "cholesterol": 2, "gluc": 1, "smoke": 1, "alco": 1, "active": 0}),
+        ("High-risk elder male", {"age": 63, "gender": "Male", "height": 170, "weight": 105,
+          "ap_hi": 180, "ap_lo": 110, "cholesterol": 3, "gluc": 3, "smoke": 1, "alco": 1, "active": 0}),
+    ]
+    for label, d in cases:
+        r = p.predict_risk(d)
+        print(f"{label}: {r['risk_percentage']}% | {r['risk_category']} | {r.get('model_used')}")
 
 if __name__ == "__main__":
-    test_result = test_predictor()
+    _test()

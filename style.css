@@ -1700,3 +1700,64 @@ one by one smoothly instead of appearing instantly.
 .recommendations li:nth-child(4) { animation-delay: 0.4s; }
 .recommendations li:nth-child(5) { animation-delay: 0.5s; }
 .recommendations li:nth-child(6) { animation-delay: 0.6s; }
+/* =====================================================
+   CARDIO MODEL — additional / updated styles
+   ===================================================== */
+
+/* field hint text under sliders */
+.field-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    margin: 4px 0 0;
+}
+
+/* Live BMI display */
+.bmi-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-card-border);
+    background: var(--color-secondary);
+    font-size: var(--font-size-sm);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+.bmi-label {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+}
+.bmi-value {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+}
+.bmi-category {
+    font-weight: var(--font-weight-medium);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+}
+
+/* BMI colour states */
+.bmi-under { background: rgba(59, 130, 246, 0.08); border-color: rgba(59,130,246,0.25); }
+.bmi-under .bmi-category { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+
+.bmi-normal { background: rgba(16, 185, 129, 0.08); border-color: rgba(16,185,129,0.25); }
+.bmi-normal .bmi-category { background: rgba(16,185,129,0.12); color: #065f46; }
+
+.bmi-over { background: rgba(245, 158, 11, 0.08); border-color: rgba(245,158,11,0.25); }
+.bmi-over .bmi-category { background: rgba(245,158,11,0.12); color: #92400e; }
+
+.bmi-obese { background: rgba(239, 68, 68, 0.08); border-color: rgba(239,68,68,0.25); }
+.bmi-obese .bmi-category { background: rgba(239,68,68,0.12); color: #991b1b; }
+
+/* Dark-mode BMI overrides */
+[data-color-scheme="dark"] .bmi-under .bmi-category  { color: #93c5fd; }
+[data-color-scheme="dark"] .bmi-normal .bmi-category { color: #6ee7b7; }
+[data-color-scheme="dark"] .bmi-over .bmi-category   { color: #fcd34d; }
+[data-color-scheme="dark"] .bmi-obese .bmi-category  { color: #fca5a5; }

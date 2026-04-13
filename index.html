@@ -3,25 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heart Disease Risk Prediction Tool</title>
+    <title>Cardiovascular Risk Prediction Tool</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- =========================================
-PAGE LOADING SCREEN
-Shows loading animation before the page is ready
-========================================= -->
 
-    <div id="pageLoader">
-      <div class="loader-spinner"></div>
-    </div>
+    <div id="pageLoader"><div class="loader-spinner"></div></div>
 
     <div class="container">
         <header class="header">
             <div class="header-content">
-                <h1 class="header-title">❤️ Heart Disease Risk Prediction Tool</h1>
-                <p class="header-subtitle">Advanced medical assessment for cardiovascular risk evaluation</p>
-                <!-- Patient tabs and theme tab -->
+                <h1 class="header-title">❤️ Cardiovascular Risk Prediction Tool</h1>
+                <p class="header-subtitle">Advanced cardiovascular risk assessment powered by machine learning</p>
                 <div id="patientTabsWrapper" class="tabs-row">
                     <div class="tabs-left">
                         <div id="patientTabs" class="patient-tabs"></div>
@@ -36,163 +29,158 @@ Shows loading animation before the page is ready
 
         <main class="main-content">
             <form id="predictionForm" class="prediction-form">
-                <!-- Personal Information Section -->
+
+                <!-- ── Section 1: Personal Information ── -->
                 <section class="form-section">
                     <h2 class="section-title">Personal Information</h2>
                     <div class="form-grid">
+
                         <div class="form-group">
-                            <label class="form-label" for="age">Age: <span id="ageValue"></span> years</label>
-                            <input type="range" id="age" name="age" min="25" max="79" class="slider">
+                            <label class="form-label" for="age">
+                                Age: <span id="ageValue">45</span> years
+                            </label>
+                            <input type="range" id="age" name="age" min="30" max="65" value="45" class="slider">
                         </div>
+
                         <div class="form-group">
                             <label class="form-label">Gender</label>
                             <div class="radio-group">
                                 <label class="radio-label">
-                                    <input type="radio" name="gender" value="Male" checked>
-                                    <span class="radio-custom"></span>
-                                    Male
+                                    <input type="radio" name="gender" value="Female" checked>
+                                    <span class="radio-custom"></span>Female
                                 </label>
                                 <label class="radio-label">
-                                    <input type="radio" name="gender" value="Female">
-                                    <span class="radio-custom"></span>
-                                    Female
+                                    <input type="radio" name="gender" value="Male">
+                                    <span class="radio-custom"></span>Male
                                 </label>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="height">
+                                Height: <span id="heightValue">165</span> cm
+                            </label>
+                            <input type="range" id="height" name="height" min="130" max="207" value="165" class="slider">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="weight">
+                                Weight: <span id="weightValue">70</span> kg
+                            </label>
+                            <input type="range" id="weight" name="weight" min="40" max="200" value="70" class="slider">
+                        </div>
+
+                    </div>
+
+                    <!-- BMI Live Display -->
+                    <div class="bmi-display" id="bmiDisplay">
+                        <span class="bmi-label">BMI</span>
+                        <span class="bmi-value" id="bmiValue">25.7</span>
+                        <span class="bmi-category" id="bmiCategory">Normal</span>
                     </div>
                 </section>
 
-                <!-- Health Metrics Section -->
+                <!-- ── Section 2: Blood Pressure ── -->
                 <section class="form-section">
-                    <h2 class="section-title">Health Metrics</h2>
+                    <h2 class="section-title">Blood Pressure</h2>
                     <div class="form-grid">
+
                         <div class="form-group">
-                            <label class="form-label" for="cholesterol">Cholesterol Level: <span id="cholesterolValue"></span> mg/dL</label>
-                            <input type="range" id="cholesterol" name="cholesterol" min="150" max="349" class="slider">
+                            <label class="form-label" for="ap_hi">
+                                Systolic (upper): <span id="apHiValue">120</span> mmHg
+                            </label>
+                            <input type="range" id="ap_hi" name="ap_hi" min="70" max="240" value="120" class="slider">
+                            <p class="field-hint">Normal: &lt;120 · Elevated: 120–129 · High: ≥130</p>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label" for="bloodPressure">Blood Pressure: <span id="bloodPressureValue"></span> mmHg</label>
-                            <input type="range" id="bloodPressure" name="bloodPressure" min="90" max="179" class="slider">
+                            <label class="form-label" for="ap_lo">
+                                Diastolic (lower): <span id="apLoValue">80</span> mmHg
+                            </label>
+                            <input type="range" id="ap_lo" name="ap_lo" min="40" max="150" value="80" class="slider">
+                            <p class="field-hint">Normal: &lt;80 · High: ≥80</p>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="heartRate">Resting Heart Rate: <span id="heartRateValue"></span> bpm</label>
-                            <input type="range" id="heartRate" name="heartRate" min="60" max="140" value="80" class="slider">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="bloodSugar">Blood Sugar: <span id="bloodSugarValue"></span> mg/dL</label>
-                            <input type="range" id="bloodSugar" name="bloodSugar" min="70" max="450" class="slider">
-                        </div>
+
                     </div>
                 </section>
 
-                <!-- Lifestyle Factors Section -->
+                <!-- ── Section 3: Lab Results ── -->
+                <section class="form-section">
+                    <h2 class="section-title">Lab Results</h2>
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label class="form-label" for="cholesterol">Cholesterol Level</label>
+                            <select id="cholesterol" name="cholesterol" class="form-control">
+                                <option value="1">Normal (&lt; 200 mg/dL)</option>
+                                <option value="2">Above Normal (200–239 mg/dL)</option>
+                                <option value="3">Well Above Normal (≥ 240 mg/dL)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="gluc">Blood Glucose Level</label>
+                            <select id="gluc" name="gluc" class="form-control">
+                                <option value="1">Normal (&lt; 100 mg/dL)</option>
+                                <option value="2">Above Normal / Pre-diabetes (100–125 mg/dL)</option>
+                                <option value="3">Well Above Normal / Diabetes (≥ 126 mg/dL)</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- ── Section 4: Lifestyle ── -->
                 <section class="form-section">
                     <h2 class="section-title">Lifestyle Factors</h2>
                     <div class="form-grid">
+
                         <div class="form-group">
-                            <label class="form-label" for="smoking">Smoking Status</label>
-                            <select id="smoking" name="smoking" class="form-control">
-                                <option value="Never">Never</option>
-                                <option value="Former">Former</option>
-                                <option value="Current">Current</option>
-                            </select>
+                            <label class="form-label">Smoking</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="smoke" value="0" checked>
+                                    <span class="radio-custom"></span>No (never / former)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="smoke" value="1">
+                                    <span class="radio-custom"></span>Yes (current smoker)
+                                </label>
+                            </div>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label" for="alcohol">Alcohol Intake</label>
-                            <select id="alcohol" name="alcohol" class="form-control">
-                                <option value="None">None</option>
-                                <option value="Moderate">Moderate</option>
-                                <option value="Heavy">Heavy</option>
-                            </select>
+                            <label class="form-label">Alcohol Intake</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="alco" value="0" checked>
+                                    <span class="radio-custom"></span>No (none)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="alco" value="1">
+                                    <span class="radio-custom"></span>Yes (any regular intake)
+                                </label>
+                            </div>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label" for="exercise">Exercise Hours per Week: <span id="exerciseValue"></span> hours</label>
-                            <input type="range" id="exercise" name="exercise" min="0" max="9" class="slider">
+                            <label class="form-label">Physical Activity</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="active" value="1" checked>
+                                    <span class="radio-custom"></span>Yes (exercises regularly)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="active" value="0">
+                                    <span class="radio-custom"></span>No (sedentary)
+                                </label>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="stress">Stress Level: <span id="stressValue"></span>/10</label>
-                            <input type="range" id="stress" name="stress" min="1" max="10" class="slider">
-                        </div>
+
                     </div>
                 </section>
 
-                <!-- Medical History Section -->
-                <section class="form-section">
-                    <h2 class="section-title">Medical History</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Family History of Heart Disease</label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="familyHistory" value="Yes">
-                                    <span class="radio-custom"></span>
-                                    Yes
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="familyHistory" value="No" checked>
-                                    <span class="radio-custom"></span>
-                                    No
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Diabetes</label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="diabetes" value="Yes">
-                                    <span class="radio-custom"></span>
-                                    Yes
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="diabetes" value="No" checked>
-                                    <span class="radio-custom"></span>
-                                    No
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Obesity</label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="obesity" value="Yes">
-                                    <span class="radio-custom"></span>
-                                    Yes
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="obesity" value="No" checked>
-                                    <span class="radio-custom"></span>
-                                    No
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Exercise Induced Angina</label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="angina" value="Yes">
-                                    <span class="radio-custom"></span>
-                                    Yes
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="angina" value="No" checked>
-                                    <span class="radio-custom"></span>
-                                    No
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group form-group-full">
-                            <label class="form-label" for="chestPain">Chest Pain Type</label>
-                            <select id="chestPain" name="chestPain" class="form-control">
-                                <option value="Asymptomatic">Asymptomatic</option>
-                                <option value="Typical Angina">Typical Angina</option>
-                                <option value="Atypical Angina">Atypical Angina</option>
-                                <option value="Non-anginal Pain">Non-anginal Pain</option>
-                            </select>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Submit Button -->
+                <!-- ── Submit ── -->
                 <div class="form-actions">
                     <button type="submit" class="btn btn--primary btn--large" id="predictBtn">
                         <span class="btn-text">Predict Risk</span>
@@ -202,23 +190,21 @@ Shows loading animation before the page is ready
                 </div>
             </form>
 
-            <!-- Results Section -->
+            <!-- ── Results ── -->
             <section class="results-section hidden" id="resultsSection">
                 <div class="results-card">
                     <h2 class="results-title">Risk Assessment Results</h2>
-                    <div class="risk-display">
+                    <div class="risk-display" id="riskDisplay">
                         <div class="risk-percentage" id="riskPercentage">--</div>
                         <div class="risk-category" id="riskCategory">--</div>
                     </div>
-                    <div class="recommendations" id="recommendations">
-                        <!-- Recommendations will be populated by JavaScript -->
-                    </div>
+                    <div class="recommendations" id="recommendations"></div>
                 </div>
             </section>
 
-            <!-- Disclaimer -->
+            <!-- ── Disclaimer ── -->
             <div class="disclaimer">
-                <p><strong>Medical Disclaimer:</strong> This tool is for educational purposes only and should not replace professional medical advice. Please consult with a qualified healthcare provider for proper medical evaluation and treatment.</p>
+                <p><strong>Medical Disclaimer:</strong> This tool is for educational purposes only and should not replace professional medical advice. Please consult a qualified healthcare provider for proper evaluation and treatment.</p>
             </div>
         </main>
     </div>
