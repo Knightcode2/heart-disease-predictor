@@ -214,27 +214,42 @@ class CardioPredictor:
         weight = float(raw.get("weight", 75))
         ap_hi  = float(raw.get("ap_hi",  120))
         ap_lo  = float(raw.get("ap_lo",   80))
+        chol   = int(raw.get("cholesterol", 1))   # 1/2/3
+        gluc   = int(raw.get("gluc", 1))           # 1/2/3
 
         bmi            = weight / ((height / 100) ** 2)
         pulse_pressure = ap_hi - ap_lo
 
-        # Age excluded: higher age is a natural process, not a clinical risk marker
-        # in the same sense as BP or BMI, so showing it vs "healthy norm" is misleading.
-
         def norm(val, lo, hi):
             return max(0, min(100, (val - lo) / (hi - lo) * 100))
 
+        # Ordinal 1/2/3 mapped to meaningful radar percentages:
+        #   1=Normal      → 25%  (visible on radar, represents the healthy baseline)
+        #   2=Above Normal → 62%  (mid-range warning)
+        #   3=Well Above   → 100% (maximum risk)
+        # This avoids the zero/disappearing axis problem while preserving relative ordering.
+        ORDINAL_MAP = {1: 25.0, 2: 62.0, 3: 100.0}
+
+        def norm_ord(val):
+            return ORDINAL_MAP.get(int(val), 25.0)
+
         n = self.HEALTHY_NORMS
-        labels = ["Systolic BP", "Diastolic BP", "BMI", "Pulse Pressure"]
+        labels = ["Systolic BP", "Diastolic BP", "BMI",
+                  "Pulse Pressure", "Cholesterol", "Glucose"]
 
         user    = [norm(ap_hi, 70, 220),
                    norm(ap_lo, 40, 140),
                    norm(bmi, 15, 45),
-                   norm(pulse_pressure, 10, 100)]
+                   norm(pulse_pressure, 10, 100),
+                   norm_ord(chol),
+                   norm_ord(gluc)]
 
+        # Healthy norms: cholesterol=1 (Normal)=25%, gluc=1 (Normal)=25%
         healthy = [norm(n["ap_hi"], 70, 220),
                    norm(n["ap_lo"], 40, 140),
                    norm(n["bmi"], 15, 45),
-                   norm(n["pulse_pressure"], 10, 100)]
+                   norm(n["pulse_pressure"], 10, 100),
+                   norm_ord(n["cholesterol"]),
+                   norm_ord(n["gluc"])]
 
         return {"labels": labels, "user": user, "healthy": healthy}

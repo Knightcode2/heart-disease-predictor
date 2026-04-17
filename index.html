@@ -65,12 +65,34 @@
 
         <div class="field-row two-col">
           <div class="field-group">
-            <label for="height">Height <span class="unit">(cm)</span></label>
-            <input type="number" id="height" min="100" max="250" step="1" placeholder="e.g. 170" required />
+            <label for="height">Height</label>
+            <div class="input-with-unit">
+              <input type="number" id="height" min="100" max="250" step="1" placeholder="e.g. 170" required />
+              <div class="unit-dropdown" id="heightUnitDropdown">
+                <button type="button" class="unit-dropdown-btn" id="heightUnitBtn">
+                  <span id="heightUnitCurrent">cm</span><span class="unit-caret">&#9662;</span>
+                </button>
+                <div class="unit-dropdown-menu" id="heightUnitMenu">
+                  <div class="unit-option active" data-unit="cm">cm <small>centimetre</small></div>
+                  <div class="unit-option" data-unit="ft">ft <small>feet</small></div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="field-group">
-            <label for="weight">Weight <span class="unit">(kg)</span></label>
-            <input type="number" id="weight" min="20" max="300" step="0.1" placeholder="e.g. 75" required />
+            <label for="weight">Weight</label>
+            <div class="input-with-unit">
+              <input type="number" id="weight" min="20" max="300" step="0.1" placeholder="e.g. 75" required />
+              <div class="unit-dropdown" id="weightUnitDropdown">
+                <button type="button" class="unit-dropdown-btn" id="weightUnitBtn">
+                  <span id="weightUnitCurrent">kg</span><span class="unit-caret">&#9662;</span>
+                </button>
+                <div class="unit-dropdown-menu" id="weightUnitMenu">
+                  <div class="unit-option active" data-unit="kg">kg <small>kilogram</small></div>
+                  <div class="unit-option" data-unit="lb">lb <small>pound</small></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -180,7 +202,7 @@
 
       <!-- Radar -->
       <div class="chart-section">
-        <h3 class="chart-title">Health Profile vs Healthy Norms</h3>
+        <h3 class="chart-title" id="radarTitle">Health Profile vs Healthy Norms</h3>
         <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
       </div>
 
@@ -206,7 +228,7 @@
   <div class="modal-box card">
     <h3>Add Patient</h3>
     <p>Enter the patient's name to save their record.</p>
-    <input type="text" id="patientNameInput" placeholder="e.g. John Doe" maxlength="40" autocomplete="off" />
+    <input type="text" id="patientNameInput" placeholder="e.g. Prince" maxlength="40" autocomplete="off" />
     <div class="modal-actions">
       <button class="btn-secondary" id="cancelPatient">Cancel</button>
       <button class="btn-primary btn-small" id="confirmPatient">Add</button>
@@ -219,6 +241,23 @@
   <div class="predict-overlay-box">
     <div class="pulse-heart" id="pulseHeart">❤️</div>
     <p class="pulse-label">Analysing cardiovascular risk…</p>
+  </div>
+</div>
+
+<!-- Model Status Toast -->
+<div class="model-status-toast" id="modelStatusToast" style="display:none">
+  <div class="toast-icon" id="toastIcon">✅</div>
+  <div class="toast-body">
+    <div class="toast-title" id="toastTitle">Model Status</div>
+    <div class="toast-msg" id="toastMsg">Model is loaded and ready.</div>
+  </div>
+</div>
+
+<!-- ── METRIC POPUP MODAL ──────────────────────────── -->
+<div class="metric-popup-backdrop" id="metricPopupBackdrop" style="display:none">
+  <div class="metric-popup-card card" id="metricPopupCard">
+    <button class="metric-popup-close" id="metricPopupClose">&times;</button>
+    <div class="metric-popup-content" id="metricPopupContent"></div>
   </div>
 </div>
 
