@@ -676,10 +676,19 @@ function showResult(data, scroll) {
       </div>
       <div class="metric-detail-section">
         <strong>Where you stand vs healthy average:</strong>
-        <div class="metric-detail-bar">
-          <div class="metric-bar-track" style="background:${barGradient};height:8px">
-            <div class="metric-bar-marker" style="left:${avgPct}%;background:var(--green);width:2px;height:14px;top:-3px" title="Healthy avg"></div>
-            <div class="metric-bar-marker" style="left:${yourPct}%;background:var(--text)" title="You"></div>
+        <div class="metric-bar-wrapper">
+          <div class="metric-arrow-label" style="left:${yourPct}%">
+            <span class="arrow-text">You</span>
+            <span class="arrow-value">${bmiVal.toFixed(1)}</span>
+            <span class="arrow-pointer">▼</span>
+          </div>
+          <div class="metric-bar-track" style="background:${barGradient};height:8px;overflow:visible">
+            <div class="metric-bar-marker healthy-marker" style="left:${avgPct}%" title="Healthy avg"></div>
+          </div>
+          <div class="metric-healthy-label" style="left:${avgPct}%">
+            <span class="healthy-pointer">▲</span>
+            <span class="healthy-text">Healthy</span>
+            <span class="healthy-value">${avgBmi}</span>
           </div>
         </div>
         <div class="metric-bar-labels">
@@ -689,7 +698,6 @@ function showResult(data, scroll) {
           <span>30</span>
           <span>40 (Obese)</span>
         </div>
-        <div class="metric-detail-note">▲ White = You (${bmiVal.toFixed(1)}) &nbsp;|&nbsp; 🟢 Green = Healthy avg (${avgBmi})</div>
       </div>
       <div class="metric-detail-section">
         <strong>BMI Ranges:</strong><br>
@@ -723,10 +731,19 @@ function showResult(data, scroll) {
       </div>
       <div class="metric-detail-section">
         <strong>Where you stand vs healthy average:</strong>
-        <div class="metric-detail-bar">
-          <div class="metric-bar-track" style="background:${barGradient};height:8px">
-            <div class="metric-bar-marker" style="left:${avgPct}%;background:var(--green);width:2px;height:14px;top:-3px" title="Healthy avg"></div>
-            <div class="metric-bar-marker" style="left:${yourPct}%;background:var(--text)" title="You"></div>
+        <div class="metric-bar-wrapper">
+          <div class="metric-arrow-label" style="left:${yourPct}%">
+            <span class="arrow-text">You</span>
+            <span class="arrow-value">${ppVal}</span>
+            <span class="arrow-pointer">▼</span>
+          </div>
+          <div class="metric-bar-track" style="background:${barGradient};height:8px;overflow:visible">
+            <div class="metric-bar-marker healthy-marker" style="left:${avgPct}%" title="Healthy avg"></div>
+          </div>
+          <div class="metric-healthy-label" style="left:${avgPct}%">
+            <span class="healthy-pointer">▲</span>
+            <span class="healthy-text">Healthy</span>
+            <span class="healthy-value">${avgPp}</span>
           </div>
         </div>
         <div class="metric-bar-labels">
@@ -736,7 +753,6 @@ function showResult(data, scroll) {
           <span>80</span>
           <span>100+ (High)</span>
         </div>
-        <div class="metric-detail-note">▲ White = You (${ppVal}) &nbsp;|&nbsp; 🟢 Green = Healthy avg (${avgPp})</div>
       </div>
       <div class="metric-detail-section">
         <strong>PP Ranges:</strong><br>
@@ -861,6 +877,38 @@ function renderRadar(cd) {
   const gridColor  = isDark ? "#334155" : "#e2e8f0";
   const labelColor = isDark ? "#94a3b8" : "#64748b";
   const ctx = document.getElementById("radarChart").getContext("2d");
+
+  // Build actual values directly from the form inputs (no backend dependency)
+  const hCm = getHeightCm();
+  const wKg = getWeightKg();
+  const sysBP = parseFloat(apHiEl.value) || 0;
+  const diaBP = parseFloat(apLoEl.value) || 0;
+  const pulsePr = sysBP - diaBP;
+  const bmiCalc = (hCm && wKg && hCm > 0) ? (wKg / ((hCm / 100) ** 2)) : 0;
+  const cholVal = parseInt(cholEl.value) || 1;
+  const glucVal = parseInt(glucEl.value) || 1;
+
+  const CHOL_RANGES = {1: "< 200", 2: "200–239", 3: "≥ 240"};
+  const GLUC_RANGES = {1: "< 100", 2: "100–125", 3: "≥ 126"};
+
+  const userActual = [
+    sysBP + " mmHg",
+    diaBP + " mmHg",
+    bmiCalc.toFixed(1) + " kg/m²",
+    pulsePr + " mmHg",
+    (CHOL_RANGES[cholVal] || "< 200") + " mg/dL",
+    (GLUC_RANGES[glucVal] || "< 100") + " mg/dL",
+  ];
+
+  const healthyActual = [
+    "120 mmHg",
+    "80 mmHg",
+    "24.5 kg/m²",
+    "40 mmHg",
+    "< 200 mg/dL",
+    "< 100 mg/dL",
+  ];
+
   radarChart = new Chart(ctx, {
     type: "radar",
     data: {
@@ -889,7 +937,23 @@ function renderRadar(cd) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: labelColor, font: { size: 11 } } } },
+      plugins: {
+        legend: { labels: { color: labelColor, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const idx = context.dataIndex;
+              const dsIdx = context.datasetIndex;
+              const dsLabel = context.dataset.label;
+              if (dsIdx === 0) {
+                return `${dsLabel}: ${userActual[idx]}`;
+              } else {
+                return `${dsLabel}: ${healthyActual[idx]}`;
+              }
+            }
+          }
+        }
+      },
       scales: {
         r: {
           min: 0, max: 100,

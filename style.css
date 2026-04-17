@@ -564,7 +564,7 @@ body {
   background: var(--surface);
   border-radius: 999px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .metric-bar-fill {
@@ -597,6 +597,87 @@ body {
   font-style: italic;
   margin-top: .2rem;
   line-height: 1.4;
+}
+
+/* ── Arrow label markers on metric bar ──────────────── */
+.metric-bar-wrapper {
+  position: relative;
+  padding-top: 38px;   /* space for the "You" arrow above the bar */
+  padding-bottom: 34px; /* space for the "Healthy" arrow below the bar */
+  margin-top: .4rem;
+}
+
+.metric-arrow-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  z-index: 2;
+}
+
+.arrow-text {
+  font-size: .62rem;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.arrow-value {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.arrow-pointer {
+  font-size: .6rem;
+  color: var(--accent);
+  line-height: 1;
+  margin-top: -1px;
+}
+
+.metric-healthy-label {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  z-index: 2;
+}
+
+.healthy-pointer {
+  font-size: .6rem;
+  color: var(--green);
+  line-height: 1;
+  margin-bottom: -1px;
+}
+
+.healthy-text {
+  font-size: .6rem;
+  font-weight: 800;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+
+.healthy-value {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.metric-bar-marker.healthy-marker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--green);
+  border-radius: 2px;
 }
 
 @keyframes metricDetailIn {

@@ -252,4 +252,30 @@ class CardioPredictor:
                    norm_ord(n["cholesterol"]),
                    norm_ord(n["gluc"])]
 
-        return {"labels": labels, "user": user, "healthy": healthy}
+        # Actual values for display in tooltips (not normalized)
+        user_actual = [
+            round(ap_hi, 1),
+            round(ap_lo, 1),
+            round(bmi, 1),
+            round(pulse_pressure, 1),
+            {1: "< 200", 2: "200–239", 3: "≥ 240"}.get(chol, "< 200"),
+            {1: "< 100", 2: "100–125", 3: "≥ 126"}.get(gluc, "< 100"),
+        ]
+        healthy_actual = [
+            120,       # Systolic BP  (mmHg)
+            80,        # Diastolic BP (mmHg)
+            24.5,      # BMI
+            40,        # Pulse Pressure (mmHg)
+            "< 200",   # Cholesterol (mg/dL)
+            "< 100",   # Glucose     (mg/dL)
+        ]
+        units = ["mmHg", "mmHg", "kg/m²", "mmHg", "mg/dL", "mg/dL"]
+
+        return {
+            "labels": labels,
+            "user": user,
+            "healthy": healthy,
+            "user_actual": user_actual,
+            "healthy_actual": healthy_actual,
+            "units": units,
+        }
